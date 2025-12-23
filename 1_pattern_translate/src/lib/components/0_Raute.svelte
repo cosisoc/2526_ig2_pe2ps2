@@ -230,8 +230,8 @@ function getGapColor(gap) {
 		return '#B6CDC7'; // Hellgrün
 	}
 	
-	// Fallback für andere Rotationen (sollte nicht vorkommen)
-	return '#91A599';
+	// Fallback für andere Rotationen 
+	return '#849179';
 }
 
 </script>
