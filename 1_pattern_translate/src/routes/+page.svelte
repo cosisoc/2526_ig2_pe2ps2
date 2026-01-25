@@ -42,7 +42,7 @@
 	let raute4TriangleOpacity = 50;
 	let raute4StarSpacing = 0.8;
 	let raute4StrokeWidth = 0.2;
-	let raute4ShowGaps = true;
+	let raute4ShowGaps = false;
 	let raute4Scale = 1.0;
 	let raute4TriColors = {};
 	let raute4GapTriColors = {};

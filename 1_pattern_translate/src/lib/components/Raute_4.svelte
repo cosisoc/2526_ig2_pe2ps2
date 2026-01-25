@@ -55,7 +55,8 @@ function buildRhombiFromBase(base) {
   return rh;
 }
 
-let rhombi = buildRhombiFromBase(baseRhombus);
+// Cache static rhombi (baseRhombus doesn't change)
+const rhombi = buildRhombiFromBase(baseRhombus);
 
 // Pattern settings
 // Pattern params (align with Raute_1)
@@ -112,11 +113,9 @@ function selectGapTriangle(r, c, rot, t) {
 // shape editor removed
 
 // Compute centers for grid
-// compute module geometry similarly to Raute_1
 function computeModuleGeometry() {
-  // When zooming out (scale < 1), we need more rows/steps to fill the viewport
-  // Use a multiplier to ensure full coverage while keeping performance reasonable
-  const zoomFactor = Math.min(scale, 1.0);
+  // Limit grid size for performance - use actual rows/steps with minimal multiplier
+  const zoomFactor = Math.max(scale, 0.8); // higher minimum to limit expansion
   const effectiveRows = Math.ceil(rows / zoomFactor * 2.5);
   const effectiveSteps = Math.ceil(steps / zoomFactor * 2.5);
   
@@ -148,55 +147,50 @@ function computeModuleGeometry() {
   return { centers, moduleHeight, halfModuleWidth, baseDistance, baseRowSpacing, effectiveRows, effectiveSteps };
 }
 
-let moduleGeom = computeModuleGeometry();
-
-// reactive: recompute module geometry when dependent values change
-$: rhombi = buildRhombiFromBase(baseRhombus);
+// Reactive: only recompute when needed
 $: moduleGeom = computeModuleGeometry();
-$: moduleCenters = moduleGeom.centers.map(c => ({ ...c, x: c.x * Math.max(starSpacing, 1.0), y: c.y * Math.max(starSpacing, 1.0) }));
+$: actualSpacing = Math.max(starSpacing, 1.0);
+$: moduleCenters = moduleGeom.centers.map(c => ({ ...c, x: c.x * actualSpacing, y: c.y * actualSpacing }));
 
 // baseRhombus is static unless modified by code
 
-// gap centers
-$: gapCenters = (() => {
-  let gaps = [];
-  const baseGapDistance = a * sqrt3 * (1.0 + gapSize);
-  const effectiveRows = moduleGeom.effectiveRows;
-  const effectiveSteps = moduleGeom.effectiveSteps;
+// gap centers - only compute if showGaps is true
+$: gapCenters = showGaps ? (() => {
+  const gaps = [];
+  const baseGapDistance = a * sqrt3;
+  const { effectiveRows, effectiveSteps, baseRowSpacing, baseDistance, halfModuleWidth } = moduleGeom;
+  const centerOffsetY = -((effectiveRows - 1) / 2) * baseRowSpacing;
+  
   for (let row = 0; row < effectiveRows; row++) {
-    const baseY = row * moduleGeom.baseRowSpacing + (-((effectiveRows - 1) / 2) * moduleGeom.baseRowSpacing);
-    const xShift = (row % 2 === 1) ? moduleGeom.halfModuleWidth : 0;
+    const baseY = row * baseRowSpacing + centerOffsetY;
+    const xShift = (row % 2 === 1) ? halfModuleWidth : 0;
     for (let col = -effectiveSteps; col <= effectiveSteps; col++) {
-      const baseCenterX = col * moduleGeom.baseDistance + xShift;
-      const baseCenterY = baseY;
-      const angles = [30, 90, 150];
+      const baseCenterX = col * baseDistance + xShift;
+      // Pre-calculated rotations
       const rotations = [0, 60, 120];
+      const cosVals = [0.866, 0, -0.866]; // cos(30°), cos(90°), cos(150°)
+      const sinVals = [0.5, 1, 0.5]; // sin(30°), sin(90°), sin(150°)
+      
       for (let i = 0; i < 3; i++) {
-        const rad = angles[i] * Math.PI / 180;
-        const baseGapX = baseCenterX + baseGapDistance * Math.cos(rad);
-        const baseGapY = baseCenterY + baseGapDistance * Math.sin(rad);
-        gaps.push({ row, col, x: baseGapX * Math.max(starSpacing, 1.0), y: baseGapY * Math.max(starSpacing, 1.0), rotation: rotations[i] });
+        gaps.push({
+          row, col,
+          x: (baseCenterX + baseGapDistance * cosVals[i]) * actualSpacing,
+          y: (baseY + baseGapDistance * sinVals[i]) * actualSpacing,
+          rotation: rotations[i]
+        });
       }
     }
   }
   return gaps;
-})();
+})() : [];
 
-// Precompute rhombus points for each module center (6 rhombi per center)
-$: centersWithRh = moduleCenters.map(c => {
-  const rhList = [];
-  for (let i = 0; i < 6; i++) {
-    rhList.push(buildRhombusAt(c.x, c.y, rotation + i * 60, starScale));
+// build rhombus at position (simplified)
+function getRhombusPoints(cx, cy, rotDeg) {
+  const pts = [];
+  for (let p of baseRhombus) {
+    const r = rotatePoint(p[0] * starScale, p[1] * starScale, rotDeg);
+    pts.push({ x: r.x + cx, y: r.y + cy });
   }
-  return { ...c, rhombi: rhList };
-});
-
-// build rhombus points (transformed) for a given center
-function buildRhombusAt(cx, cy, rot=0, scaleFactor=1) {
-  const pts = baseRhombus.map(p => {
-    const r = rotatePoint(p[0] * scaleFactor, p[1] * scaleFactor, rot);
-    return { x: r.x + cx, y: r.y + cy };
-  });
   return pts;
 }
 
@@ -238,27 +232,24 @@ export function applySelectedColor() {
 <div class="svg-container-raute4">
   <svg viewBox="-1200 -800 2400 1600" class="svg-canvas" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
   <g transform="scale({scale})">
-  {#each centersWithRh as center}
-    {#key `${center.row}-${center.col}`}
-      {#each center.rhombi as rh, i}
-        <!-- two triangles per rhombus -->
-        <g>
-          <polygon
-            points={pointsToStr([rh[0], rh[3], rh[2]])}
-            fill={triColors[getTriKey(center.row, center.col, i, 0)] || defaultColorFor(center.row, center.col, i)}
-            stroke="#000" stroke-width={strokeWidth}
-            on:click={() => selectTriangle(center.row, center.col, i, 0)}
-          />
-          <polygon
-            points={pointsToStr([rh[0], rh[1], rh[2]])}
-            fill={triColors[getTriKey(center.row, center.col, i, 1)] || defaultColorFor(center.row, center.col, i)}
-            fill-opacity={triangleOpacity / 100}
-            stroke="#000" stroke-width={strokeWidth}
-            on:click={() => selectTriangle(center.row, center.col, i, 1)}
-          />
-        </g>
+  {#each moduleCenters as center (center.row + '-' + center.col)}
+    <g transform="translate({center.x} {center.y}) rotate({rotation}) scale({starScale})">
+      {#each rhombi as rh, i}
+        <polygon
+          points={`${rh[0][0]},${rh[0][1]} ${rh[3][0]},${rh[3][1]} ${rh[2][0]},${rh[2][1]}`}
+          fill={triColors[getTriKey(center.row, center.col, i, 0)] || defaultColorFor(center.row, center.col, i)}
+          stroke="#000" stroke-width={strokeWidth}
+          on:click={() => selectTriangle(center.row, center.col, i, 0)}
+        />
+        <polygon
+          points={`${rh[0][0]},${rh[0][1]} ${rh[1][0]},${rh[1][1]} ${rh[2][0]},${rh[2][1]}`}
+          fill={triColors[getTriKey(center.row, center.col, i, 1)] || defaultColorFor(center.row, center.col, i)}
+          fill-opacity={triangleOpacity / 100}
+          stroke="#000" stroke-width={strokeWidth}
+          on:click={() => selectTriangle(center.row, center.col, i, 1)}
+        />
       {/each}
-    {/key}
+    </g>
   {/each}
 
   {#if showGaps}
