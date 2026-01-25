@@ -103,10 +103,10 @@
 	let raute3Rows = 15;
 	let raute3Steps = 12;
 	let raute3TriangleOpacity = 50;
-	let raute3StarSpacing = 0.8;
+	let raute3StarSpacing = 1.0;
 	let raute3RadialDistortion = 0.0;
 	let raute3MonoColor = false;
-	let raute3ShiftRows = true;
+	let raute3ShowGaps = true;
 	let raute3Colors = ['#91A599', '#849179', '#B6CDC7'];
 
 	function callRandomizeColors3() { if (raute3Component) raute3Component.randomizeColors(); }
@@ -311,7 +311,7 @@
 						<input type="checkbox" bind:checked={raute3MonoColor} /> Einfarbig
 					</label>
 					<label class="checkbox-label">
-						<input type="checkbox" bind:checked={raute3ShiftRows} /> Verschiebung
+					<input type="checkbox" bind:checked={raute3ShowGaps} /> Lücken anzeigen
 					</label>
 					<div class="button-group">
 						<button on:click={callRandomizeColors3}>Randomize Colors</button>
@@ -370,7 +370,7 @@
 					bind:starSpacing={raute3StarSpacing}
 					bind:radialDistortion={raute3RadialDistortion}
 					bind:monoColor={raute3MonoColor}
-					bind:shiftRows={raute3ShiftRows}
+				bind:showGaps={raute3ShowGaps}
 					bind:colors={raute3Colors}
 				/>
 			{:else if selectedIndex === 0}

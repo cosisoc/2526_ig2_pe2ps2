@@ -19,7 +19,7 @@ function rotatePoint(x, y, degrees) {
 	return [x * cos - y * sin, x * sin + y * cos];
 }
 
-// 6 Rauten für einen Stern
+// 6 Rauten für einen Stern (statisch, ohne Verzerrung)
 let rhombi = [];
 for (let i = 0; i < 6; i++) {
 	let rotatedRhombus = [];
@@ -29,6 +29,26 @@ for (let i = 0; i < 6; i++) {
 		rotatedRhombus.push(rotated);
 	}
 	rhombi.push(rotatedRhombus);
+}
+
+// Funktion zum Bauen von verzerrten Rauten
+// Verzerrung wird VOR der Rotation angewendet!
+function buildDistortedRhombi(distortionScale) {
+	let distorted = [];
+	for (let i = 0; i < 6; i++) {
+		let rotatedRhombus = [];
+		for (let j = 0; j < baseRhombus.length; j++) {
+			const point = baseRhombus[j];
+			// Erst verzerren (in lokaler X-Richtung der Raute)
+			const distortedX = point[0] * distortionScale;
+			const distortedY = point[1]; // Y bleibt gleich
+			// Dann rotieren
+			const rotated = rotatePoint(distortedX, distortedY, i * 60);
+			rotatedRhombus.push(rotated);
+		}
+		distorted.push(rotatedRhombus);
+	}
+	return distorted;
 }
 
 // Punkte zu SVG String
@@ -41,59 +61,55 @@ function pointsToStr(points) {
 	return str;
 }
 
-// Compute module metrics from (possibly) distorted rhombi so tiles stay connected
-$: moduleMetrics = (() => {
-	// reference width from the original (non-distorted) rhombi
-	let refXs = [];
-	for (let i = 0; i < rhombi.length; i++) {
-		for (let j = 0; j < rhombi[i].length; j++) {
-			refXs.push(rhombi[i][j][0]);
-		}
-	}
-	const refWidth = Math.max(...refXs) - Math.min(...refXs) || 1;
-
-	const source = radialDistortion === 0 ? rhombi : distortedRhombi;
-	let allYs = [], allXs = [];
-	for (let i = 0; i < source.length; i++) {
-		for (let j = 0; j < source[i].length; j++) {
-			allYs.push(source[i][j][1]);
-			allXs.push(source[i][j][0]);
-		}
-	}
-	const moduleHeight = Math.max(...allYs) - Math.min(...allYs);
-	const halfModuleWidth = (Math.max(...allXs) - Math.min(...allXs)) / 2;
-	const currentWidth = Math.max(...allXs) - Math.min(...allXs) || refWidth;
-	const scale = currentWidth / refWidth;
-	// baseDistance follows original definition but scaled when distorted
-	const baseDistance = a * sqrt3 * 1.727 * scale;
-	const rowSpacing = moduleHeight * 0.75;
-	return { moduleHeight, halfModuleWidth, baseDistance, rowSpacing };
-})();
-
-// provide convenient reactive aliases used elsewhere in the file
-$: baseDistance = moduleMetrics.baseDistance;
-$: rowSpacing = moduleMetrics.rowSpacing;
-$: moduleHeight = moduleMetrics.moduleHeight;
-$: halfModuleWidth = moduleMetrics.halfModuleWidth;
-
 // Slider Werte (exported for parent control)
 export let rows = 15;
 export let steps = 12;
 export let gapSize = 0.0;
 export let triangleOpacity = 50;
-export let starSpacing = 0.8;
+export let starSpacing = 1.0; // Default auf 1.0 für Raute 3
 export let rotation = 0;
+export let showGaps = true;
 export let monoColor = false;
-export let radialDistortion = 0.0;
-export let shiftRows = true; // toggle row-wise horizontal shift for odd rows
+export let radialDistortion = 0.0; // Verzerrung: 0=normal, >0=Sterne breiter, <0=Gaps breiter
+
+// Verzerrung NUR in X-Richtung (Breite), Y bleibt konstant
+// Bei radialDistortion > 0: Stern-Rauten werden breiter, Gap-Rauten schmaler
+// Bei radialDistortion < 0: Stern-Rauten werden schmaler, Gap-Rauten breiter
+$: starDistortionScale = 1.0 + radialDistortion * 0.3; // 30% Breiten-Änderung pro Einheit
+$: gapDistortionScale = 1.0 - radialDistortion * 0.3; // Invers zu Sternen
+
+// Verzerrte Stern-Rauten: Verzerrung wird VOR der Rotation angewendet
+// So wird jede Raute in ihrem eigenen lokalen Koordinatensystem verzerrt
+$: distortedStarRhombi = buildDistortedRhombi(starDistortionScale);
+
+// Verzerrte Gap-Rauten (einfache X-Skalierung, keine Rotation nötig)
+$: distortedGapRhombus = baseRhombus.map(point => [
+	point[0] * gapDistortionScale,  // X wird verzerrt
+	point[1]                        // Y bleibt original
+]);
+
+// Statische Metriken - bleiben konstant auch bei Verzerrung
+// Die Positionen der Sterne ändern sich NICHT, nur die Rauten-Form
+$: staticMetrics = (() => {
+	let allYs = [], allXs = [];
+	for (let i = 0; i < rhombi.length; i++) {
+		for (let j = 0; j < rhombi[i].length; j++) {
+			allYs.push(rhombi[i][j][1]);
+			allXs.push(rhombi[i][j][0]);
+		}
+	}
+	const moduleHeight = Math.max(...allYs) - Math.min(...allYs);
+	const halfModuleWidth = (Math.max(...allXs) - Math.min(...allXs)) / 2;
+	const baseDistance = a * sqrt3 * 1.727; // Konstant, keine Verzerrung
+	const rowSpacing = moduleHeight * 0.75;
+	return { moduleHeight, halfModuleWidth, baseDistance, rowSpacing };
+})();
 
 // Wenn starSpacing < 1.0: Sterne werden kleiner, Abstand bleibt 1.0
 // Wenn starSpacing >= 1.0: Sterne bleiben normal, Abstand wird größer
 $: actualDistance = Math.max(starSpacing, 1.0);
 $: starScale = Math.min(starSpacing, 1.0);
-$: gapScale = actualDistance; // Lücken-Rauten skalieren mit actualDistance
-$: d = baseDistance * actualDistance;
-$: verticalSpacing = rowSpacing * actualDistance;
+$: gapScale = actualDistance;
 
 // Farben
 const defaultColors = ['#91A599', '#849179', '#B6CDC7'];
@@ -119,67 +135,6 @@ export function applyPalette(palette) {
 	colors = [...palette.colors];
 }
 
-// Funktion zur radialen Verzerrung eines Punkts vom Zentrum aus
-function applyRadialDistortion(point, centerX, centerY, distortionAmount) {
-	const dx = point[0] - centerX;
-	const dy = point[1] - centerY;
-	const distance = Math.sqrt(dx * dx + dy * dy);
-	
-	if (distance === 0) return point;
-	
-	// Je näher am Zentrum, desto stärker die Verzerrung
-	// Maximale Distanz ist etwa a * sqrt3 (äußerer Punkt der Raute)
-	const maxDist = a * sqrt3;
-	const normalizedDist = Math.min(distance / maxDist, 1.0);
-	
-	// Invertiere: 1.0 im Zentrum, 0.0 außen
-	const distortionFactor = 1.0 - normalizedDist;
-	
-	// Anwenden der Verzerrung (radial nach außen/innen)
-	const distortionScale = 1.0 + (distortionAmount * distortionFactor);
-	
-	return [
-		centerX + dx * distortionScale,
-		centerY + dy * distortionScale
-	];
-}
-
-// Verzerrte Rauten berechnen
-$: distortedRhombi = rhombi.map(rhombus => {
-	if (radialDistortion === 0) return rhombus;
-	
-	return rhombus.map(point => 
-		applyRadialDistortion(point, 0, 0, radialDistortion)
-	);
-});
-
-// Verzerrte Füllrauten berechnen (nur horizontale Skalierung)
-$: distortedGapRhombus = (() => {
-	if (radialDistortion === 0) return baseRhombus;
-	
-	// Berechne wie stark die Sternrauten an ihren äußeren Punkten wachsen
-	// Der äußere Punkt einer Raute ist bei etwa [a/2, y]
-	// Die horizontale Position dieses Punkts bestimmt die Lücke
-	const testPoint = [a / 2, -a * sqrt3 / 2]; // Seitlicher Punkt
-	const distFromCenter = Math.sqrt(testPoint[0] * testPoint[0] + testPoint[1] * testPoint[1]);
-	const maxDist = a * sqrt3;
-	const normalizedDist = Math.min(distFromCenter / maxDist, 1.0);
-	const distortionFactor = 1.0 - normalizedDist;
-	const distortionScale = 1.0 + (radialDistortion * distortionFactor);
-	
-	// Wie viel breiter/schmaler werden die Sternrauten horizontal?
-	const sternWidthChange = distortionScale;
-	
-	// Füllrauten müssen entsprechend angepasst werden
-	// Faktor angepasst um Lücken/Überlappungen zu vermeiden
-	const horizontalScale = 1.0 - (radialDistortion * 2.2);
-	
-	return baseRhombus.map(point => [
-		point[0] * horizontalScale,  // x-Koordinate skalieren
-		point[1]                      // y-Koordinate unverändert
-	]);
-})();
-
 function randomColor() {
 	const hex = Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
 	return '#' + hex;
@@ -200,7 +155,7 @@ export function toggleMonoColor() {
 export function resetToDefaults() {
 	gapSize = 0.0;
 	triangleOpacity = 50;
-	starSpacing = 0.8;
+	starSpacing = 1.0;
 	rotation = 0;
 	showGaps = true;
 	monoColor = false;
@@ -208,19 +163,17 @@ export function resetToDefaults() {
 	colors = ['#91A599', '#849179', '#B6CDC7'];
 }
 
-// Sternpositionen berechnen (verwende dynamische moduleMetrics damit Kanten verbunden bleiben)
+// Sternpositionen berechnen - nutze STATISCHE Metriken (keine Verzerrung der Positionen)
 $: moduleCenters = (() => {
-	// Use the reactive aliases (baseDistance, rowSpacing, halfModuleWidth)
-	// so spacing/translation behaves the same as other Raute components.
 	let stars = [];
-	const baseRowSpacing = rowSpacing;
-	const baseDist = baseDistance;
+	const baseRowSpacing = staticMetrics.rowSpacing;
+	const baseDist = staticMetrics.baseDistance;
 	const centerOffsetY = -((rows - 1) / 2) * baseRowSpacing;
-
+	
 	for (let row = 0; row < rows; row++) {
 		const baseY = row * baseRowSpacing + centerOffsetY;
-		const xShift = (shiftRows && (row % 2 === 1)) ? halfModuleWidth : 0;
-
+		const xShift = (row % 2 === 1) ? staticMetrics.halfModuleWidth : 0;
+		
 		for (let col = -steps; col <= steps; col++) {
 			const baseX = col * baseDist + xShift;
 			stars.push({
@@ -232,29 +185,36 @@ $: moduleCenters = (() => {
 	return stars;
 })();
 
-// Lücken-Rauten berechnen
+// Lücken-Rauten berechnen - nutze STATISCHE Metriken (keine Verzerrung der Positionen)
 $: gapCenters = (() => {
-	const gaps = [];
-	const baseRowSpacing = rowSpacing;
-	const baseDist = baseDistance;
+	let gaps = [];
+	const baseRowSpacing = staticMetrics.rowSpacing;
+	const baseDist = staticMetrics.baseDistance;
 	const centerOffsetY = -((rows - 1) / 2) * baseRowSpacing;
-	const baseGapDistance = baseDist * (1.0 + gapSize);
-
+	// Gap-Abstand bleibt konstant (original Größe)
+	const baseGapDistance = a * sqrt3;
+	
 	for (let row = 0; row < rows; row++) {
 		const baseY = row * baseRowSpacing + centerOffsetY;
-		const xShift = (shiftRows && (row % 2 === 1)) ? halfModuleWidth : 0;
-
+		const xShift = (row % 2 === 1) ? staticMetrics.halfModuleWidth : 0;
+		
 		for (let col = -steps; col <= steps; col++) {
 			const baseCenterX = col * baseDist + xShift;
 			const baseCenterY = baseY;
+			
 			const angles = [30, 90, 150];
 			const rotations = [0, 60, 120];
-
+			
 			for (let i = 0; i < 3; i++) {
 				const rad = angles[i] * Math.PI / 180;
 				const baseGapX = baseCenterX + baseGapDistance * Math.cos(rad);
 				const baseGapY = baseCenterY + baseGapDistance * Math.sin(rad);
-				gaps.push({ x: baseGapX * actualDistance, y: baseGapY * actualDistance, rotation: rotations[i] });
+				
+				gaps.push({
+					x: baseGapX * actualDistance,
+					y: baseGapY * actualDistance,
+					rotation: rotations[i]
+				});
 			}
 		}
 	}
@@ -287,13 +247,6 @@ $: gapColorMap = monoColor ? {
 	60: colors[1],
 	120: colors[2]
 };
-
-// allow explicit gap color overrides so user can pick border colors
-let gapCustomColors = {
-    0: colors[0],
-    60: colors[1],
-    120: colors[2]
-};
 </script>
 
 <div class="svg-container">
@@ -302,8 +255,8 @@ let gapCustomColors = {
 		<svg viewBox="-900 -1000 1800 2000" class="svg-canvas" shape-rendering="crispEdges" style="max-width: 100%; max-height: 100%; aspect-ratio: 0.9;">
 			{#key [colors, radialDistortion]}
 			{#each moduleCenters as star}
-				<g transform="translate({star.x} {star.y}) rotate({rotation}) scale({starScale})">
-					{#each distortedRhombi as rhombus, i}
+				<g transform="translate({star.x} {star.y}) rotate({rotation})">
+					{#each distortedStarRhombi as rhombus, i}
 						<polygon 
 							points={pointsToStr([rhombus[0], rhombus[3], rhombus[2]])} 
 							fill={colorMap[i]} 
@@ -329,17 +282,18 @@ let gapCustomColors = {
 				</g>
 			{/each}
 
+			{#if showGaps}
 			{#each gapCenters as gap}
-				<g transform="translate({gap.x} {gap.y}) rotate({rotation + gap.rotation}) scale(1, {gapScale})">
+				<g transform="translate({gap.x} {gap.y}) rotate({rotation + gap.rotation})">
 					<polygon 
 						points={pointsToStr([distortedGapRhombus[0], distortedGapRhombus[3], distortedGapRhombus[2]])} 
-						fill={gapCustomColors[gap.rotation] || gapColorMap[gap.rotation] || colors[1]} 
+						fill={gapColorMap[gap.rotation] || colors[1]} 
 						stroke="#000" 
 						stroke-width="0" 
 					/>
 					<polygon 
 						points={pointsToStr([distortedGapRhombus[0], distortedGapRhombus[1], distortedGapRhombus[2]])} 
-						fill={gapCustomColors[gap.rotation] || gapColorMap[gap.rotation] || colors[1]} 
+						fill={gapColorMap[gap.rotation] || colors[1]} 
 						fill-opacity={triangleOpacity / 100} 
 						stroke="#000" 
 						stroke-width="0" 
@@ -354,8 +308,7 @@ let gapCustomColors = {
 					/>
 				</g>
 			{/each}
-
-
+			{/if}
 			{/key}
 		</svg>
 		</div>
