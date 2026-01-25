@@ -234,6 +234,19 @@ export function applySelectedColor() {
     triColors = {...triColors};
   }
 }
+
+// Set a color for a specific local triangle position within the base rhombus
+// i: rhombus index (0..5), t: triangle index within rhombus (0 or 1)
+// This will apply the color to every triangle with the same (i,t) across the grid
+export function setColorForLocalTriangle(i, t, color) {
+  for (let r = 0; r < rows; r++) {
+    for (let c = -steps; c <= steps; c++) {
+      const key = getTriKey(r, c, i, t);
+      triColors[key] = color;
+    }
+  }
+  triColors = { ...triColors };
+}
 </script>
 
 <div class="svg-container-raute4">

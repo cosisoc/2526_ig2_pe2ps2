@@ -6,6 +6,7 @@
 	import Raute2 from '$lib/components/Raute_2.svelte';	
 	import Raute3 from '$lib/components/Raute_3.svelte';	
 	import Raute4 from '$lib/components/Raute_4.svelte';	
+	import Raute5 from '$lib/components/Raute_5.svelte';
 
 	// Liste aller verfügbaren Pattern (mit Beschreibungen für Sidebar)
 	const patterns = [
@@ -13,7 +14,8 @@
 		{ id: '1', name: 'Raute 1', component: Raute1, description: 'Variation 1 with color mapping' },
 		{ id: '2', name: 'Raute 2', component: Raute2, description: 'Variation 2 with offsets' },
 		{ id: '3', name: 'Raute 3', component: Raute3, description: 'Distorted / warped variation' },
-		{ id: '4', name: 'Raute 4', component: Raute4, description: 'Full control variant (controls in left sidebar)' }
+		{ id: '4', name: 'Raute 4', component: Raute4, description: 'Full control variant (controls in left sidebar)' },
+		{ id: '5', name: 'Raute 5', component: Raute5, description: 'Utility / position-based controls' }
 	];
 
 	// Aktuell ausgewähltes Pattern (index-basiert für Sidebar)
@@ -112,6 +114,37 @@
 	function callRandomizeColors3() { if (raute3Component) raute3Component.randomizeColors(); }
 	function callResetColors3() { if (raute3Component) raute3Component.resetColors(); }
 	function callToggleMono3() { if (raute3Component) raute3Component.toggleMonoColor(); raute3MonoColor = !raute3MonoColor; }
+
+	// Raute 5 state
+	let raute5Component;
+	let raute5Rows = 15;
+	let raute5Steps = 12;
+	let raute5TriangleOpacity = 50;
+	let raute5StarSpacing = 0.8;
+	let raute5StrokeWidth = 0.2;
+	let raute5ShowGaps = false;
+	let raute5Scale = 1.0;
+	let raute5TriColors = {};
+	let raute5GapTriColors = {};
+	let raute5Selected = null;
+	let raute5SelectedColor = '#ff0000';
+	
+	function callRandomizeColors5() {
+		if (raute5Component) raute5Component.randomizeColors();
+	}
+	
+	function callResetColors5() {
+		if (raute5Component) raute5Component.resetColors();
+	}
+	
+	function callApplySelectedColor5() {
+		if (raute5Component) raute5Component.applySelectedColor();
+	}
+	
+	function applyAndDeselect5() {
+		callApplySelectedColor5();
+		raute5Selected = null;
+	}
 
 </script>
 
@@ -319,6 +352,69 @@
 					</div>
 				</div>
 			{/if}
+
+			<!-- Raute 5 Controls -->
+			{#if selectedIndex === 5}
+				<div transition:slide class="raute4-controls">
+					<h3>Raute 5 Controls</h3>
+					
+					<label>
+						Rows: {raute5Rows}
+						<input type="range" min="1" max="30" bind:value={raute5Rows} />
+					</label>
+					
+					<label>
+						Steps: {raute5Steps}
+						<input type="range" min="1" max="24" bind:value={raute5Steps} />
+					</label>
+					
+					<label>
+						Deckkraft 2. Dreieck: {raute5TriangleOpacity}
+						<input type="range" bind:value={raute5TriangleOpacity} min="0" max="100" step="1" />
+					</label>
+					
+					<label>
+						Abstand Sterne: {raute5StarSpacing.toFixed(2)}
+						<input type="range" bind:value={raute5StarSpacing} min="0.2" max="3.5" step="0.01" />
+					</label>
+					
+					<label>
+						Linienstärke: {raute5StrokeWidth}
+						<input type="range" min="0" max="4" step="0.1" bind:value={raute5StrokeWidth} />
+					</label>
+					
+					<label>
+						Zoom: {raute5Scale.toFixed(2)}
+						<input type="range" min="0.3" max="3.0" step="0.05" bind:value={raute5Scale} />
+					</label>
+					
+					<label class="checkbox-label">
+						<input type="checkbox" bind:checked={raute5ShowGaps} />
+						Lücken anzeigen
+					</label>
+					
+					<div class="button-group">
+						<button on:click={callRandomizeColors5}>Randomize Colors</button>
+						<button on:click={callResetColors5}>Reset Colors</button>
+					</div>
+
+					{#if raute5Selected}
+						<div class="color-picker-section">
+							<strong>Ausgewähltes Dreieck:</strong>
+							<div style="margin-top: 8px;">
+								<input type="color" bind:value={raute5SelectedColor} on:input={callApplySelectedColor5} />
+							</div>
+							<button on:click={applyAndDeselect5}>
+								Apply & Deselect
+							</button>
+						</div>
+					{:else}
+						<div class="info-text">
+							Klicke ein Dreieck im SVG, um die Farbe zu ändern
+						</div>
+					{/if}
+				</div>
+			{/if}
 		</div>
 
 		<!-- Mitte: Pattern Display -->
@@ -372,6 +468,21 @@
 					bind:monoColor={raute3MonoColor}
 				bind:showGaps={raute3ShowGaps}
 					bind:colors={raute3Colors}
+				/>
+			{:else if selectedIndex === 5}
+				<Raute5 
+					bind:this={raute5Component}
+					bind:rows={raute5Rows}
+					bind:steps={raute5Steps}
+					bind:triangleOpacity={raute5TriangleOpacity}
+					bind:starSpacing={raute5StarSpacing}
+					bind:strokeWidth={raute5StrokeWidth}
+					bind:showGaps={raute5ShowGaps}
+					bind:scale={raute5Scale}
+					bind:triColors={raute5TriColors}
+					bind:gapTriColors={raute5GapTriColors}
+					bind:selected={raute5Selected}
+					bind:selectedColor={raute5SelectedColor}
 				/>
 			{:else if selectedIndex === 0}
 				<Pattern0
