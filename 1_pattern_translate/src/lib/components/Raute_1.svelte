@@ -56,7 +56,7 @@ const halfModuleWidth = (Math.max(...allXs) - Math.min(...allXs)) / 2;
 const baseDistance = a * sqrt3 * 1.727;
 const rowSpacing = moduleHeight * 0.75;
 
-// Slider Werte
+// Slider Werte (exported so parent can control from main sidebar)
 export let rows = 15;
 export let steps = 12;
 export let gapSize = 0.0;
@@ -77,6 +77,25 @@ $: verticalSpacing = rowSpacing * actualDistance;
 // Farben
 const defaultColors = ['#91A599', '#849179', '#B6CDC7'];
 export let colors = ['#91A599', '#849179', '#B6CDC7'];
+
+// Vordefinierte Farbmuster (welche Raute bekommt welche Farbe)
+const colorPatterns = [
+	[0, 1, 2, 0, 1, 2],  // Pattern 0: Standard alternierend
+	[0, 0, 1, 1, 2, 2],  // Pattern 1: Paarweise
+	[0, 2, 1, 0, 2, 1],  // Pattern 2: 0-2-1 Rotation
+	[1, 0, 2, 1, 0, 2],  // Pattern 3: 1-0-2 Rotation
+	[2, 1, 0, 2, 1, 0],  // Pattern 4: 2-1-0 Rotation
+	[0, 1, 0, 2, 1, 2],  // Pattern 5: Gemischt 1
+	[1, 2, 0, 1, 2, 0],  // Pattern 6: Gemischt 2
+	[2, 0, 1, 2, 0, 1],  // Pattern 7: Gemischt 3
+	[0, 2, 0, 1, 2, 1],  // Pattern 8: Gemischt 4
+	[1, 0, 1, 2, 0, 2],  // Pattern 9: Gemischt 5
+	[2, 1, 2, 0, 1, 0],  // Pattern 10: Gemischt 6
+];
+
+// Aktuelles Muster
+export let patternIndex = 0;
+$: colorMapping = colorPatterns[patternIndex];
 
 function randomColor() {
 	const hex = Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
@@ -107,6 +126,7 @@ export function resetToDefaults() {
 	showGaps = true;
 	monoColor = false;
 	colors = ['#91A599', '#849179', '#B6CDC7'];
+	patternIndex = 0;
 }
 
 // Sternpositionen berechnen
@@ -179,12 +199,12 @@ $: colorMap = monoColor ? {
 	4: colors[0],
 	5: colors[0]
 } : {
-	0: colors[0],
-	1: colors[1],
-	2: colors[2],
-	3: colors[0],
-	4: colors[1],
-	5: colors[2]
+	0: colors[colorMapping[0]],
+	1: colors[colorMapping[1]],
+	2: colors[colorMapping[2]],
+	3: colors[colorMapping[3]],
+	4: colors[colorMapping[4]],
+	5: colors[colorMapping[5]]
 };
 
 $: gapColorMap = monoColor ? {
@@ -196,25 +216,51 @@ $: gapColorMap = monoColor ? {
 	60: colors[1],
 	120: colors[2]
 };
+
+// Special variation (patternIndex === 1): create central orange/yellow cluster
+function chooseOuterColor(star, i) {
+	if (patternIndex !== 1) return colorMap[i];
+	// normalized module coordinates
+	const nx = star.x / (baseDistance * actualDistance);
+	const ny = star.y / (rowSpacing * actualDistance);
+	const ax = Math.abs(nx);
+	const ay = Math.abs(ny);
+	// central region (approximately 1 module radius)
+	if (ax <= 1 && ay <= 1) return '#F23A00'; // strong orange/red
+	// adjacent region
+	if (ax <= 2 && ay <= 1) return '#F58220'; // orange
+	return colorMap[i];
+}
+
+function chooseInnerColor(star, i) {
+	if (patternIndex !== 1) return colorMap[i];
+	// inner (small wedge) should be bright yellow for special pattern
+	const nx = star.x / (baseDistance * actualDistance);
+	const ny = star.y / (rowSpacing * actualDistance);
+	const ax = Math.abs(nx);
+	const ay = Math.abs(ny);
+	if (ax <= 2 && ay <= 1) return '#FFD400';
+	return colorMap[i];
+}
 </script>
 
 <div class="svg-container">
 	<!-- Mitte: SVG Pattern -->
 	<div style="flex: 1; height: 100%; display: flex; align-items: center; justify-content: center;">
 		<svg viewBox="-900 -1000 1800 2000" class="svg-canvas" shape-rendering="crispEdges" style="max-width: 100%; max-height: 100%; aspect-ratio: 0.9;">
-			{#key colors}
+			{#key [colors, colorMapping]}
 			{#each moduleCenters as star}
 				<g transform="translate({star.x} {star.y}) rotate({rotation}) scale({starScale})">
 					{#each rhombi as rhombus, i}
 						<polygon 
 							points={pointsToStr([rhombus[0], rhombus[3], rhombus[2]])} 
-							fill={colorMap[i]} 
+							fill={chooseOuterColor(star, i)} 
 							stroke="#000" 
 							stroke-width="0" 
 						/>
 						<polygon 
 							points={pointsToStr([rhombus[0], rhombus[1], rhombus[2]])} 
-							fill={colorMap[i]} 
+							fill={chooseInnerColor(star, i)} 
 							fill-opacity={triangleOpacity / 100} 
 							stroke="#000" 
 							stroke-width="0" 
@@ -231,15 +277,41 @@ $: gapColorMap = monoColor ? {
 				</g>
 			{/each}
 
-
+			{#if showGaps}
+			{#each gapCenters as gap}
+				<g transform="translate({gap.x} {gap.y}) rotate({rotation + gap.rotation}) scale(1, {gapScale})">
+					<polygon 
+						points={pointsToStr([baseRhombus[0], baseRhombus[3], baseRhombus[2]])} 
+						fill={gapColorMap[gap.rotation] || colors[1]} 
+						stroke="#000" 
+						stroke-width="0" 
+					/>
+					<polygon 
+						points={pointsToStr([baseRhombus[0], baseRhombus[1], baseRhombus[2]])} 
+						fill={gapColorMap[gap.rotation] || colors[1]} 
+						fill-opacity={triangleOpacity / 100} 
+						stroke="#000" 
+						stroke-width="0" 
+					/>
+					<line 
+						x1={baseRhombus[0][0]} 
+						y1={baseRhombus[0][1]} 
+						x2={baseRhombus[2][0]} 
+						y2={baseRhombus[2][1]} 
+						stroke="#000" 
+						stroke-width="0" 
+					/>
+				</g>
+			{/each}
+			{/if}
 			{/key}
 		</svg>
-	</div>
+		</div>
 
 	<!-- controls moved to parent sidebar -->
-</div>
+	</div>
 
-<style>
+	<style>
 	.svg-container {
 		width: 100%;
 		height: 100%;
@@ -257,5 +329,56 @@ $: gapColorMap = monoColor ? {
 		height: 100%;
 		background: white;
 		border: 1px solid #ddd;
+	}
+
+	.controls {
+		width: 300px;
+		min-width: 300px;
+		height: 100%;
+		background: white;
+		padding: 20px;
+		border-left: 1px solid #ddd;
+		overflow-y: auto;
+		box-sizing: border-box;
+	}
+
+	.controls label {
+		display: block;
+		font-family: Arial, sans-serif;
+		font-size: 14px;
+		margin-bottom: 8px;
+	}
+
+	.controls input[type="range"] {
+		width: 200px;
+		display: block;
+		margin-top: 5px;
+	}
+
+	.button-group {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+		margin-top: 10px;
+	}
+
+	.controls button {
+		padding: 8px 15px;
+		background: #91A599;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		font-family: Arial, sans-serif;
+		font-size: 13px;
+		transition: background 0.2s;
+	}
+
+	.controls button:hover {
+		background: #7a8e85;
+	}
+
+	.controls button:active {
+		background: #6a7e75;
 	}
 </style>

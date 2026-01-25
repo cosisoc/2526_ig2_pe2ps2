@@ -62,14 +62,11 @@
 
   <div class="control-row">
     <span>Gesamtrotation:</span>
-    <input type="range" min="0" max="360" step="1" bind:value={globalRotation} />
-    <span>{globalRotation}°</span>
+    
   </div>
   
   <div class="control-row">
-    <span>Rotation:</span>
-    <input type="range" min="0" max="360" step="1" bind:value={rotation} />
-    <span>{rotation}°</span>
+    
   </div>
 </div>
 

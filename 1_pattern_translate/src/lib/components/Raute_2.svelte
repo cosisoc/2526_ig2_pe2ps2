@@ -56,7 +56,7 @@ const halfModuleWidth = (Math.max(...allXs) - Math.min(...allXs)) / 2;
 const baseDistance = a * sqrt3 * 1.727;
 const rowSpacing = moduleHeight * 0.75;
 
-// Slider Werte
+// Slider Werte (exported for parent control)
 export let rows = 15;
 export let steps = 12;
 export let gapSize = 0.0;
@@ -77,6 +77,26 @@ $: verticalSpacing = rowSpacing * actualDistance;
 // Farben
 const defaultColors = ['#91A599', '#849179', '#B6CDC7'];
 export let colors = ['#91A599', '#849179', '#B6CDC7'];
+
+// Vordefinierte Farbpaletten
+const colorPalettes = [
+	{ name: 'Grün Töne', colors: ['#91A599', '#849179', '#B6CDC7'] },
+	{ name: 'Sunset', colors: ['#FF6B6B', '#FFD93D', '#6BCF7F'] },
+	{ name: 'Ocean', colors: ['#1E3A8A', '#3B82F6', '#93C5FD'] },
+	{ name: 'Purple Dream', colors: ['#7C3AED', '#C084FC', '#E9D5FF'] },
+	{ name: 'Pastel', colors: ['#FFC0CB', '#FFE4B5', '#E0BBE4'] },
+	{ name: 'Forest', colors: ['#2D5016', '#6B8E23', '#9ACD32'] },
+	{ name: 'Autumn', colors: ['#8B4513', '#D2691E', '#CD853F'] },
+	{ name: 'Neon', colors: ['#FF00FF', '#00FFFF', '#FFFF00'] },
+	{ name: 'Monochrome', colors: ['#333333', '#666666', '#999999'] },
+	{ name: 'Fire', colors: ['#DC143C', '#FF4500', '#FFA500'] },
+	{ name: 'Ice', colors: ['#00CED1', '#87CEEB', '#B0E0E6'] },
+	{ name: 'Earth', colors: ['#8B4513', '#A0522D', '#D2B48C'] },
+];
+
+export function applyPalette(palette) {
+	colors = [...palette.colors];
+}
 
 function randomColor() {
 	const hex = Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
@@ -231,15 +251,41 @@ $: gapColorMap = monoColor ? {
 				</g>
 			{/each}
 
-
+			{#if showGaps}
+			{#each gapCenters as gap}
+				<g transform="translate({gap.x} {gap.y}) rotate({rotation + gap.rotation}) scale(1, {gapScale})">
+					<polygon 
+						points={pointsToStr([baseRhombus[0], baseRhombus[3], baseRhombus[2]])} 
+						fill={gapColorMap[gap.rotation] || colors[1]} 
+						stroke="#000" 
+						stroke-width="0" 
+					/>
+					<polygon 
+						points={pointsToStr([baseRhombus[0], baseRhombus[1], baseRhombus[2]])} 
+						fill={gapColorMap[gap.rotation] || colors[1]} 
+						fill-opacity={triangleOpacity / 100} 
+						stroke="#000" 
+						stroke-width="0" 
+					/>
+					<line 
+						x1={baseRhombus[0][0]} 
+						y1={baseRhombus[0][1]} 
+						x2={baseRhombus[2][0]} 
+						y2={baseRhombus[2][1]} 
+						stroke="#000" 
+						stroke-width="0" 
+					/>
+				</g>
+			{/each}
+			{/if}
 			{/key}
 		</svg>
-	</div>
+		</div>
 
 	<!-- controls moved to parent sidebar -->
-</div>
+	</div>
 
-<style>
+	<style>
 	.svg-container {
 		width: 100%;
 		height: 100%;
@@ -257,5 +303,176 @@ $: gapColorMap = monoColor ? {
 		height: 100%;
 		background: white;
 		border: 1px solid #ddd;
+	}
+
+	.controls {
+		width: 300px;
+		min-width: 300px;
+		height: 100%;
+		background: white;
+		padding: 20px;
+		border-left: 1px solid #ddd;
+		overflow-y: auto;
+		box-sizing: border-box;
+	}
+
+	.controls label {
+		display: block;
+		font-family: Arial, sans-serif;
+		font-size: 14px;
+		margin-bottom: 8px;
+	}
+
+	.controls input[type="range"] {
+		width: 200px;
+		display: block;
+		margin-top: 5px;
+	}
+
+	.button-group {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+		margin-top: 10px;
+	}
+
+	.controls button {
+		padding: 8px 15px;
+		background: #91A599;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		font-family: Arial, sans-serif;
+		font-size: 13px;
+		transition: background 0.2s;
+	}
+
+	.controls button:hover {
+		background: #7a8e85;
+	}
+
+	.controls button:active {
+		background: #6a7e75;
+	}
+
+	/* Farbauswahl Sektion */
+	.color-section {
+		margin-top: 20px;
+		padding-top: 20px;
+		border-top: 2px solid #e0e0e0;
+	}
+
+	.color-section h4 {
+		margin: 0 0 15px 0;
+		font-family: Arial, sans-serif;
+		font-size: 16px;
+		color: #333;
+		font-weight: 600;
+	}
+
+	.color-pickers {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		margin-bottom: 20px;
+	}
+
+	.color-picker-item {
+		display: flex;
+		flex-direction: column;
+		gap: 5px;
+	}
+
+	.color-picker-item label {
+		font-family: Arial, sans-serif;
+		font-size: 13px;
+		color: #555;
+		font-weight: 500;
+	}
+
+	.color-input-wrapper {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+
+	.color-input-wrapper input[type="color"] {
+		width: 60px;
+		height: 40px;
+		border: 2px solid #ddd;
+		border-radius: 6px;
+		cursor: pointer;
+		padding: 3px;
+	}
+
+	.color-input-wrapper input[type="color"]:hover {
+		border-color: #91A599;
+	}
+
+	.color-code {
+		font-family: monospace;
+		font-size: 12px;
+		color: #666;
+		text-transform: uppercase;
+	}
+
+	.palettes-section {
+		margin-top: 15px;
+	}
+
+	.palettes-section > label {
+		display: block;
+		margin-bottom: 10px;
+		font-family: Arial, sans-serif;
+		font-size: 13px;
+		color: #555;
+		font-weight: 500;
+	}
+
+	.palette-grid {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 8px;
+		max-height: 300px;
+		overflow-y: auto;
+	}
+
+	.palette-button {
+		padding: 8px;
+		background: white;
+		border: 2px solid #e0e0e0;
+		border-radius: 6px;
+		cursor: pointer;
+		transition: all 0.2s;
+		display: flex;
+		flex-direction: column;
+		gap: 5px;
+		align-items: center;
+	}
+
+	.palette-button:hover {
+		border-color: #91A599;
+		background: #f9f9f9;
+		transform: translateY(-2px);
+	}
+
+	.palette-preview {
+		display: flex;
+		width: 100%;
+		height: 30px;
+		border-radius: 4px;
+		overflow: hidden;
+	}
+
+	.palette-color {
+		flex: 1;
+	}
+
+	.palette-name {
+		font-family: Arial, sans-serif;
+		font-size: 11px;
+		color: #666;
+		text-align: center;
 	}
 </style>
