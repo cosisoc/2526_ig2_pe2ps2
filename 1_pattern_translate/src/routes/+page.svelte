@@ -222,9 +222,8 @@ onMount(() => {
 						Deckkraft 2. Dreieck: {pattern0TriangleOpacity}
 						<input type="range" bind:value={pattern0TriangleOpacity} min="0" max="100" step="1" />
 					</label>
-                    
 					<label>
-						Rotation: {pattern0Rotation}°
+						Rotation: {pattern0Rotation}
 						<input type="range" bind:value={pattern0Rotation} min="0" max="360" step="1" />
 					</label>
 					<div class="button-group">
@@ -337,7 +336,7 @@ onMount(() => {
 					</label>
 					<label>
 						Verzerrung: {raute3RadialDistortion.toFixed(2)}
-						<input type="range" bind:value={raute3RadialDistortion} min="-2.0" max="2.0" step="0.01" />
+						<input type="range" bind:value={raute3RadialDistortion} min="-6.0" max="1.40" step="0.01" />
 					</label>
 					<label class="checkbox-label">
 						<input type="checkbox" bind:checked={raute3MonoColor} /> Einfarbig

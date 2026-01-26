@@ -49,6 +49,8 @@ function buildDistortedRhombi(distortionScale) {
 			// Inner half (t <= 0.5) remains unchanged to avoid creating gaps.
 			let localFactor = 1;
 			let distortedX;
+			// make sure distortedY is declared before any assignment
+			let distortedY = point[1];
 			// Two modes:
 			// - expansion (distortionScale >= 1): apply effect starting at effectStart (affects side + outer)
 			// - shrinking (distortionScale < 1): apply effect only to outer half (t>=0.5)
@@ -57,10 +59,20 @@ function buildDistortedRhombi(distortionScale) {
 			if (distortionScale >= 1) {
 				if (t >= effectStart) {
 					u = Math.min(1, (t - effectStart) / (1 - effectStart)); // 0..1 across effect zone
-					localFactor = 1 + (distortionScale - 1) * u;
-					distortedX = point[0] * localFactor;
+					// For expansion: instead of widening X, compress the Y (raise the middle)
+					// so the rhombi flatten and become hexagon-like.
+					// Safety: cap compression to avoid inversion or excessive squashing.
+					const yCompressFactor = 0.6; // 0..1, higher -> stronger compression
+					const maxCompressAmount = 0.85; // do not compress more than this fraction
+					const minYScale = 0.05; // never scale Y below this to avoid inversion
+					let compressAmount = (distortionScale - 1) * u * yCompressFactor;
+					if (!isFinite(compressAmount) || compressAmount < 0) compressAmount = 0;
+					compressAmount = Math.min(maxCompressAmount, compressAmount);
+					distortedX = point[0];
+					distortedY = point[1] * Math.max(minYScale, 1 - compressAmount);
 				} else {
 					distortedX = point[0];
+					distortedY = point[1];
 				}
 			} else {
 				// shrinking: only outer half (t in [0.5,1]) is thinned
@@ -73,14 +85,13 @@ function buildDistortedRhombi(distortionScale) {
 					distortedX = point[0];
 				}
 			}
-			const distortedY = point[1]; // Y bleibt gleich
 			// Dann rotieren
 			let rotated = rotatePoint(distortedX, distortedY, i * 60);
 
 			// Nach der Rotation: wenn der Punkt zur äußeren Zone gehört (u>0), schieben
 			// wir ihn stufenweise auf den Hexagon-Radius hinaus, damit die Rauten
 			// bei voller Verzerrung ein Sechseck bilden (keine Lücken mehr).
-			// Only apply outward push when we are expanding (distortionScale > 1)
+			// Only apply outward adjustment when we are expanding (distortionScale > 1)
 			if (u > 0 && distortionScale > 1) {
 				const hexRadius = a * sqrt3; // Zielradius für Sechseck-Kante
 				const dist = Math.hypot(rotated[0], rotated[1]);
