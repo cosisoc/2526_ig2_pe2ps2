@@ -39,6 +39,8 @@
 	// Raute 4 state
 	let raute4Component;
     
+	let raute4Rows = 11; // Erhöht von 15 auf 20
+	let raute4Steps = 15; // Erhöht von 12 auf 18
 	let raute4TriangleOpacity = 50;
 	let raute4StarSpacing = 0.8;
 	let raute4StrokeWidth = 0.2;
@@ -259,7 +261,7 @@ onMount(() => {
 				</label>
 								<label class="checkbox-label">
 									<input type="checkbox" bind:checked={raute4ShowGaps} />
-								Lücken anzeigen
+									Lücken anzeigen
 							</label>
 					
 
@@ -407,6 +409,8 @@ onMount(() => {
 			{#if selectedIndex === 4}
 				<Raute4 
 					bind:this={raute4Component}
+					bind:rows={raute4Rows}
+					bind:steps={raute4Steps}
 					bind:triangleOpacity={raute4TriangleOpacity}
 					bind:starSpacing={raute4StarSpacing}
 					bind:strokeWidth={raute4StrokeWidth}

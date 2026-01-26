@@ -7,7 +7,7 @@ export let steps = 12;
 export let triangleOpacity = 50;
 export let starSpacing = 0.8;
 export let strokeWidth = 0.2;
-export let showGaps = true;
+// gaps are always shown
 export let scale = 1.0;
 export let triColors = {};
 export let gapTriColors = {};
@@ -30,8 +30,6 @@ let baseRhombus = [
   [-a / 2, -a * sqrt3 / 2]
 ];
 
-// no shape editor: use baseRhombus directly
-
 function rotatePoint(x, y, degrees) {
   const rad = degrees * Math.PI / 180;
   const cos = Math.cos(rad);
@@ -43,7 +41,6 @@ function pointsToStr(points) {
   return points.map(p => `${p.x},${p.y}`).join(' ');
 }
 
-// build rhombi (6 rotated rhombi for a star)
 function buildRhombiFromBase(base) {
   let rh = [];
   for (let i = 0; i < 6; i++) {
@@ -58,16 +55,12 @@ function buildRhombiFromBase(base) {
   return rh;
 }
 
-// Cache static rhombi (baseRhombus doesn't change)
 const rhombi = buildRhombiFromBase(baseRhombus);
 
 // Pattern settings
-// Pattern params (align with Raute_1)
 let gapSize = 0.0;
 let rotation = 0;
 let starScale = 1.0;
-
-// selected and triColors are already exported props
 
 function getGapKey(r, c, rot, t) {
   return `gap-${r}-${c}-${rot}-${t}`;
@@ -76,15 +69,12 @@ function getGapKey(r, c, rot, t) {
 function ensureGapColor(r, c, rot, t) {
   const key = getGapKey(r, c, rot, t);
   if (!gapTriColors[key]) {
-    // default palette for gaps (light tones)
     const palette = { '0': '#e6e6e6', '60': '#d9d9d9', '120': '#cfcfcf' };
     gapTriColors[key] = palette[String(rot)] || '#e6e6e6';
   }
   return gapTriColors[key];
 }
 
-
-// Default color based on local triangle position (rhombus index and triangle index)
 function defaultColorFor(rhombusIndex, triIndex) {
   const palette = ['#91A599', '#849179', '#B6CDC7', '#F29E4C', '#C94C4C'];
   const idx = (rhombusIndex * 2 + triIndex) % palette.length;
@@ -117,10 +107,9 @@ function selectGapTriangle(r, c, rot, t) {
 
 // Compute centers for grid
 function computeModuleGeometry() {
-  // Limit grid size for performance - use actual rows/steps with minimal multiplier
-  const zoomFactor = Math.max(scale, 0.8); // higher minimum to limit expansion
-  const effectiveRows = Math.ceil(rows / zoomFactor * 2.5);
-  const effectiveSteps = Math.ceil(steps / zoomFactor * 2.5);
+  // Balance between showing enough content and performance
+  const effectiveRows = Math.min(Math.ceil(rows * 1.5), 40); // max 40 rows (erhöht von 25)
+  const effectiveSteps = Math.min(Math.ceil(steps * 1.5), 35); // max 35 steps (erhöht von 20)
   
   // compute moduleHeight and halfModuleWidth from current rhombi
   let allYs = [];
@@ -155,38 +144,33 @@ $: moduleGeom = computeModuleGeometry();
 $: actualSpacing = Math.max(starSpacing, 1.0);
 $: moduleCenters = moduleGeom.centers.map(c => ({ ...c, x: c.x * actualSpacing, y: c.y * actualSpacing }));
 
-// Compute gap centers function (moved out of inline IIFE for clarity)
-function computeGapCenters() {
-  const gaps = [];
+// gap centers - compute only limited number
+let gapCenters = [];
+
+function computeLimitedGapCenters(centers) {
   const baseGapDistance = a * sqrt3;
-  const { effectiveRows, effectiveSteps, baseRowSpacing, baseDistance, halfModuleWidth } = moduleGeom;
-  const centerOffsetY = -((effectiveRows - 1) / 2) * baseRowSpacing;
+  const angles = [30, 90, 150]; // degrees  
+  const rotations = [0, 60, 120];
+  const allGaps = [];
+
+  // Erhöhtes Limit um alle Gaps zu zeigen
+  const maxCenters = Math.min(centers.length, 800);
   
-  for (let row = 0; row < effectiveRows; row++) {
-    const baseY = row * baseRowSpacing + centerOffsetY;
-    const xShift = (row % 2 === 1) ? halfModuleWidth : 0;
-    for (let col = -effectiveSteps; col <= effectiveSteps; col++) {
-      const baseCenterX = col * baseDistance + xShift;
-      // Pre-calculated rotations
-      const rotations = [0, 60, 120];
-      const cosVals = [0.866, 0, -0.866]; // cos(30°), cos(90°), cos(150°)
-      const sinVals = [0.5, 1, 0.5]; // sin(30°), sin(90°), sin(150°)
-      
-      for (let i = 0; i < 3; i++) {
-        gaps.push({
-          row, col,
-          x: (baseCenterX + baseGapDistance * cosVals[i]) * actualSpacing,
-          y: (baseY + baseGapDistance * sinVals[i]) * actualSpacing,
-          rotation: rotations[i]
-        });
-      }
+  for (let i = 0; i < maxCenters; i++) {
+    const c = centers[i];
+    for (let j = 0; j < 3; j++) {
+      const rad = angles[j] * Math.PI / 180;
+      const gapX = c.x + baseGapDistance * Math.cos(rad);
+      const gapY = c.y + baseGapDistance * Math.sin(rad);
+      allGaps.push({ row: c.row, col: c.col, x: gapX, y: gapY, rotation: rotations[j] });
     }
   }
-  return gaps;
+  
+  return allGaps;
 }
 
-// gap centers - only compute if showGaps is true
-$: gapCenters = showGaps ? computeGapCenters() : [];
+// Compute gaps only when moduleCenters change
+$: gapCenters = computeLimitedGapCenters(moduleCenters);
 
 // Pre-calculate rhombus triangle points to avoid recalculation
 const triPoints0 = [ {x: baseRhombus[0][0], y: baseRhombus[0][1]}, {x: baseRhombus[3][0], y: baseRhombus[3][1]}, {x: baseRhombus[2][0], y: baseRhombus[2][1]} ];
@@ -248,9 +232,7 @@ export function setColorForLocalTriangle(i, t, color) {
   localTriColors = { ...localTriColors };
 }
 
-export function toggleGaps() {
-  showGaps = !showGaps;
-}
+// Gap functions removed - gaps are always shown
 </script>
 
 <div class="svg-container-raute4">
@@ -276,8 +258,8 @@ export function toggleGaps() {
     </g>
   {/each}
 
-  {#if showGaps}
-    {#each gapCenters as gap}
+  <!-- gap rhombi - always shown -->
+  {#each gapCenters as gap}
       <g transform="translate({gap.x} {gap.y}) rotate({rotation + gap.rotation}) scale(1, {Math.max(starSpacing,1.0)})">
         <!-- gap rhombus split into two triangles so each half can be colored -->
         <!-- triangle A: points 0,3,2 -->
@@ -297,7 +279,6 @@ export function toggleGaps() {
         />
       </g>
     {/each}
-  {/if}
   </g>
   </svg>
 </div>
