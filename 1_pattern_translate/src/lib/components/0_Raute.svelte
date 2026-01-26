@@ -61,10 +61,10 @@ export let rows = 15;
 export let steps = 12;
 export let gapSize = 0.0;
 export let triangleOpacity = 50;
-export let starSpacing = 0.8;
+export let starSpacing = 1.0;
 export let rotation = 0;
 export let showGaps = true;
-export let monoColor = false;
+export let monoColor = true;
 
 // Wenn starSpacing < 1.0: Sterne werden kleiner, Abstand bleibt 1.0
 // Wenn starSpacing >= 1.0: Sterne bleiben normal, Abstand wird größer
@@ -102,10 +102,10 @@ export function toggleMonoColor() {
 export function resetToDefaults() {
 	gapSize = 0.0;
 	triangleOpacity = 50;
-	starSpacing = 0.8;
+	starSpacing = 1.0;
 	rotation = 0;
 	showGaps = true;
-	monoColor = false;
+	monoColor = true;
 	colors = ['#91A599', '#849179', '#B6CDC7'];
 }
 

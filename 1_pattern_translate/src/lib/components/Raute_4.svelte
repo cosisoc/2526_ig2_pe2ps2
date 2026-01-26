@@ -14,6 +14,9 @@ export let gapTriColors = {};
 export let selected = null;
 export let selectedColor = '#ff0000';
 
+// per-local-triangle quick mapping to avoid updating every module instance
+let localTriColors = {};
+
 // Basis-Raute (kann durch Ziehen verändert werden)
 let a = 120;
 const sqrt3 = Math.sqrt(3);
@@ -81,10 +84,10 @@ function ensureGapColor(r, c, rot, t) {
 }
 
 
-function defaultColorFor(row, col, tri) {
-  // simple default alternating colors
+// Default color based on local triangle position (rhombus index and triangle index)
+function defaultColorFor(rhombusIndex, triIndex) {
   const palette = ['#91A599', '#849179', '#B6CDC7', '#F29E4C', '#C94C4C'];
-  const idx = (row + col + tri) % palette.length;
+  const idx = (rhombusIndex * 2 + triIndex) % palette.length;
   return palette[idx];
 }
 
@@ -94,14 +97,14 @@ function getTriKey(r, c, i, t) {
 
 function ensureTriColor(r, c, i, t) {
   const key = getTriKey(r, c, i, t);
-  if (!triColors[key]) triColors[key] = defaultColorFor(r, c, i);
-  return triColors[key];
+  if (!triColors[key] && !localTriColors[`${i}-${t}`]) triColors[key] = defaultColorFor(i, t);
+  return triColors[key] || localTriColors[`${i}-${t}`];
 }
 
 function selectTriangle(r, c, i, t) {
   const key = getTriKey(r, c, i, t);
   selected = { key, row: r, col: c, rhombusIndex: i, triIndex: t };
-  selectedColor = triColors[key] || defaultColorFor(r, c, t);
+  selectedColor = triColors[key] || localTriColors[`${i}-${t}`] || defaultColorFor(i, t);
 }
 
 function selectGapTriangle(r, c, rot, t) {
@@ -230,9 +233,23 @@ export function applySelectedColor() {
     gapTriColors[selected.key] = selectedColor;
     gapTriColors = {...gapTriColors};
   } else {
-    triColors[selected.key] = selectedColor;
-    triColors = {...triColors};
+    // Apply the color globally to the local triangle position (all modules)
+    setColorForLocalTriangle(selected.rhombusIndex, selected.triIndex, selectedColor);
   }
+}
+
+// Apply a color to a specific local triangle position within the base rhombus
+// i: rhombus index (0..5), t: triangle index within rhombus (0 or 1)
+// This will set the color for every triangle with the same (i,t) across the grid
+export function setColorForLocalTriangle(i, t, color) {
+  // set per-local mapping and trigger reactive update — cheap and fast
+  const key = `${i}-${t}`;
+  localTriColors[key] = color;
+  localTriColors = { ...localTriColors };
+}
+
+export function toggleGaps() {
+  showGaps = !showGaps;
 }
 </script>
 
@@ -244,13 +261,13 @@ export function applySelectedColor() {
       {#each rhombi as rh, i}
         <polygon
           points={`${rh[0][0]},${rh[0][1]} ${rh[3][0]},${rh[3][1]} ${rh[2][0]},${rh[2][1]}`}
-          fill={triColors[getTriKey(center.row, center.col, i, 0)] || defaultColorFor(center.row, center.col, i)}
+          fill={triColors[getTriKey(center.row, center.col, i, 0)] || localTriColors[`${i}-0`] || defaultColorFor(i, 0)}
           stroke="#000" stroke-width={strokeWidth}
           on:click={() => selectTriangle(center.row, center.col, i, 0)}
         />
         <polygon
           points={`${rh[0][0]},${rh[0][1]} ${rh[1][0]},${rh[1][1]} ${rh[2][0]},${rh[2][1]}`}
-          fill={triColors[getTriKey(center.row, center.col, i, 1)] || defaultColorFor(center.row, center.col, i)}
+          fill={triColors[getTriKey(center.row, center.col, i, 1)] || localTriColors[`${i}-1`] || defaultColorFor(i, 1)}
           fill-opacity={triangleOpacity / 100}
           stroke="#000" stroke-width={strokeWidth}
           on:click={() => selectTriangle(center.row, center.col, i, 1)}

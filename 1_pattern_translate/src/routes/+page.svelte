@@ -10,9 +10,9 @@
 
 	// Liste aller verfügbaren Pattern (mit Beschreibungen für Sidebar)
 	const patterns = [
-		{ id: '0', name: 'Raute', component: Pattern0, description: 'Basic rhombus star pattern' },
-		{ id: '1', name: 'Raute 1', component: Raute1, description: 'Variation 1 with color mapping' },
-		{ id: '2', name: 'Raute 2', component: Raute2, description: 'Variation 2 with offsets' },
+		{ id: '0', name: 'Anfang (raute)', component: Pattern0, description: 'Basic rhombus star pattern' },
+		{ id: '1', name: 'Farbe (raute1)', component: Raute1, description: 'Variation 1 with color mapping' },
+		{ id: '2', name: 'Abstand (raute2)', component: Raute2, description: 'Variation 2 with offsets' },
 		{ id: '3', name: 'Raute 3', component: Raute3, description: 'Distorted / warped variation' },
 		{ id: '4', name: 'Raute 4', component: Raute4, description: 'Full control variant (controls in left sidebar)' },
 		{ id: '5', name: 'Raute 5', component: Raute5, description: 'Utility / position-based controls' }
@@ -27,20 +27,18 @@
 	let pattern0Rows = 15;
 	let pattern0Steps = 12;
 	let pattern0TriangleOpacity = 50;
-	let pattern0StarSpacing = 0.8;
+	let pattern0StarSpacing = 1.0;
 	let pattern0Rotation = 0;
-	let pattern0MonoColor = false;
+	let pattern0MonoColor = true; // permanently mono
 	let pattern0Colors = ['#91A599', '#849179', '#B6CDC7'];
-	
+
 	function callRandomizeColors0() { if (pattern0Component) pattern0Component.randomizeColors(); }
 	function callResetColors0() { if (pattern0Component) pattern0Component.resetColors(); }
-	function callToggleMono0() { if (pattern0Component) { pattern0Component.toggleMonoColor(); pattern0MonoColor = !pattern0MonoColor; } }
-	function callResetDefaults0() { if (pattern0Component) pattern0Component.resetToDefaults(); }
+    
 	
 	// Raute 4 state
 	let raute4Component;
-	let raute4Rows = 15;
-	let raute4Steps = 12;
+    
 	let raute4TriangleOpacity = 50;
 	let raute4StarSpacing = 0.8;
 	let raute4StrokeWidth = 0.2;
@@ -51,16 +49,16 @@
 	let raute4Selected = null;
 	let raute4SelectedColor = '#ff0000';
 	
-	function callRandomizeColors() {
-		if (raute4Component) raute4Component.randomizeColors();
-	}
-	
-	function callResetColors() {
-		if (raute4Component) raute4Component.resetColors();
-	}
+    
 	
 	function callApplySelectedColor() {
-		if (raute4Component) raute4Component.applySelectedColor();
+		if (!raute4Component) return;
+		if (!raute4Selected) return;
+		if (raute4Selected.isGap) {
+			raute4Component.applySelectedColor();
+		} else {
+			raute4Component.setColorForLocalTriangle(raute4Selected.rhombusIndex, raute4Selected.triIndex, raute4SelectedColor);
+		}
 	}
 	
 	function applyAndDeselect() {
@@ -68,22 +66,73 @@
 		raute4Selected = null;
 	}
 
+// Expose helper commands to browser console for Raute 4
+import { onMount } from 'svelte';
+onMount(() => {
+	window.getRaute4Pattern = () => {
+		console.log('raute4 triColors:', raute4TriColors);
+		console.log('raute4 gapTriColors:', raute4GapTriColors);
+		return { triColors: raute4TriColors, gapTriColors: raute4GapTriColors };
+	};
+
+	window.applyRaute4SelectedGlobally = () => {
+		if (!raute4Selected) return console.warn('No triangle selected');
+		if (!raute4Component) return console.warn('Raute4 component not mounted');
+		// if a gap is selected we keep gap behavior
+		if (raute4Selected.isGap) {
+			raute4Component.applySelectedColor();
+			return;
+		}
+		raute4Component.setColorForLocalTriangle(raute4Selected.rhombusIndex, raute4Selected.triIndex, raute4SelectedColor);
+	};
+
+	window.getRaute5Pattern = () => {
+		console.log('raute5 triColors:', raute5TriColors);
+		console.log('raute5 gapTriColors:', raute5GapTriColors);
+		return { triColors: raute5TriColors, gapTriColors: raute5GapTriColors };
+	};
+
+	window.applyRaute5SelectedGlobally = () => {
+		if (!raute5Selected) return console.warn('No triangle selected');
+		if (!raute5Component) return console.warn('Raute5 component not mounted');
+		if (raute5Selected.isGap) {
+			raute5Component.applySelectedColor();
+			return;
+		}
+		raute5Component.setColorForLocalTriangle(raute5Selected.rhombusIndex, raute5Selected.triIndex, raute5SelectedColor);
+	};
+});
+
 	// Raute 1 state
 	let raute1Component;
-	let raute1Rows = 15;
-	let raute1Steps = 12;
 	let raute1TriangleOpacity = 50;
-	let raute1StarSpacing = 0.8;
-	let raute1PatternIndex = 0;
-	let raute1MonoColor = false;
-	let raute1ShowGaps = true;
 	let raute1Colors = ['#91A599', '#849179', '#B6CDC7'];
+	let raute1ShowGaps = true;
+	let raute1StarSpacing = 1.0;
+	// separate compact spacing toggle (independent from showing gaps)
+	let raute1CompactSpacing = false;
 
-	function callRandomizeColors1() { if (raute1Component) raute1Component.randomizeColors(); }
-	function callResetColors1() { if (raute1Component) raute1Component.resetColors(); }
-	function callToggleGaps1() { if (raute1Component) raute1Component.toggleGaps(); raute1ShowGaps = !raute1ShowGaps; }
-	function callToggleMono1() { if (raute1Component) raute1Component.toggleMonoColor(); raute1MonoColor = !raute1MonoColor; }
-	function callResetDefaults1() { if (raute1Component) raute1Component.resetToDefaults(); }
+	function _randHex() {
+		return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+	}
+
+	function callRandomizeColors1() {
+		// update parent-bound colors so child sees the change even if bind:this isn't set
+		raute1Colors = [_randHex(), _randHex(), _randHex()];
+		if (raute1Component && typeof raute1Component.randomizeColors === 'function') {
+			try { raute1Component.randomizeColors(); } catch (e) { /* ignore */ }
+		}
+	}
+
+	function callToggleGaps1() {
+		if (raute1Component && typeof raute1Component.toggleGaps === 'function') raute1Component.toggleGaps();
+		// do not flip raute1ShowGaps here; the input binding already updated it
+	}
+
+	function callToggleSpacing1() {
+		// input binding updates raute1CompactSpacing; set star spacing accordingly
+		raute1StarSpacing = raute1CompactSpacing ? 0.8 : 1.0;
+	}
 
 	// Raute 2 state
 	let raute2Component;
@@ -117,8 +166,7 @@
 
 	// Raute 5 state
 	let raute5Component;
-	let raute5Rows = 15;
-	let raute5Steps = 12;
+    
 	let raute5TriangleOpacity = 50;
 	let raute5StarSpacing = 0.8;
 	let raute5StrokeWidth = 0.2;
@@ -129,16 +177,16 @@
 	let raute5Selected = null;
 	let raute5SelectedColor = '#ff0000';
 	
-	function callRandomizeColors5() {
-		if (raute5Component) raute5Component.randomizeColors();
-	}
-	
-	function callResetColors5() {
-		if (raute5Component) raute5Component.resetColors();
-	}
+    
 	
 	function callApplySelectedColor5() {
-		if (raute5Component) raute5Component.applySelectedColor();
+		if (!raute5Component) return;
+		if (!raute5Selected) return;
+		if (raute5Selected.isGap) {
+			raute5Component.applySelectedColor();
+		} else {
+			raute5Component.setColorForLocalTriangle(raute5Selected.rhombusIndex, raute5Selected.triIndex, raute5SelectedColor);
+		}
 	}
 	
 	function applyAndDeselect5() {
@@ -174,26 +222,14 @@
 						Deckkraft 2. Dreieck: {pattern0TriangleOpacity}
 						<input type="range" bind:value={pattern0TriangleOpacity} min="0" max="100" step="1" />
 					</label>
-					<label>
-						Abstand Sterne: {pattern0StarSpacing.toFixed(2)}
-						<input type="range" bind:value={pattern0StarSpacing} min="0.2" max="1.0" step="0.01" />
-					</label>
+                    
 					<label>
 						Rotation: {pattern0Rotation}°
 						<input type="range" bind:value={pattern0Rotation} min="0" max="360" step="1" />
 					</label>
-					<label class="checkbox-label">
-						<input type="checkbox" bind:checked={pattern0MonoColor} /> Einfarbig
-					</label>
 					<div class="button-group">
 						<button on:click={callRandomizeColors0}>Neue Farbe</button>
 						<button on:click={callResetColors0}>Reset Colors</button>
-						<button on:click={callResetDefaults0}>Reset All</button>
-					</div>
-					<div style="margin-top:8px;">
-						<label>Farbe 1: <input type="color" bind:value={pattern0Colors[0]} /></label>
-						<label>Farbe 2: <input type="color" bind:value={pattern0Colors[1]} /></label>
-						<label>Farbe 3: <input type="color" bind:value={pattern0Colors[2]} /></label>
 					</div>
 				</div>
 			{/if}
@@ -202,16 +238,6 @@
 			{#if selectedIndex === 4}
 				<div transition:slide class="raute4-controls">
 					<h3>Raute 4 Controls</h3>
-					
-					<label>
-						Rows: {raute4Rows}
-						<input type="range" min="1" max="30" bind:value={raute4Rows} />
-					</label>
-					
-					<label>
-						Steps: {raute4Steps}
-						<input type="range" min="1" max="24" bind:value={raute4Steps} />
-					</label>
 					
 					<label>
 						Deckkraft 2. Dreieck: {raute4TriangleOpacity}
@@ -233,19 +259,16 @@
 					<input type="range" min="0.3" max="3.0" step="0.05" bind:value={raute4Scale} />
 				</label>
 								<label class="checkbox-label">
-					<input type="checkbox" bind:checked={raute4ShowGaps} />
-					Lücken anzeigen
-				</label>
-									<div class="button-group">
-						<button on:click={callRandomizeColors}>Randomize Colors</button>
-						<button on:click={callResetColors}>Reset Colors</button>
-					</div>
+									<input type="checkbox" bind:checked={raute4ShowGaps} />
+								Lücken anzeigen
+							</label>
+					
 
 					{#if raute4Selected}
 						<div class="color-picker-section">
 							<strong>Ausgewähltes Dreieck:</strong>
 							<div style="margin-top: 8px;">
-								<input type="color" bind:value={raute4SelectedColor} on:input={callApplySelectedColor} />
+								<input type="color" bind:value={raute4SelectedColor} on:change={callApplySelectedColor} />
 							</div>
 							<button on:click={applyAndDeselect}>
 								Apply & Deselect
@@ -264,35 +287,22 @@
 				<div transition:slide class="raute4-controls">
 					<h3>Raute 1 Controls</h3>
 					<label>
-						Rows: {raute1Rows}
-						<input type="range" min="1" max="30" bind:value={raute1Rows} />
-					</label>
-					<label>
-						Steps: {raute1Steps}
-						<input type="range" min="1" max="24" bind:value={raute1Steps} />
-					</label>
-					<label>
 						Deckkraft 2. Dreieck: {raute1TriangleOpacity}
 						<input type="range" bind:value={raute1TriangleOpacity} min="0" max="100" step="1" />
 					</label>
-					<label>
-						Abstand Sterne: {raute1StarSpacing.toFixed(2)}
-						<input type="range" bind:value={raute1StarSpacing} min="0.2" max="3.5" step="0.01" />
-					</label>
-					<label>
-						Pattern: {raute1PatternIndex + 1}
-						<input type="range" bind:value={raute1PatternIndex} min="0" max="10" step="1" />
-					</label>
-					<label class="checkbox-label">
-						<input type="checkbox" bind:checked={raute1MonoColor} /> Einfarbig
-					</label>
-					<label class="checkbox-label">
-						<input type="checkbox" bind:checked={raute1ShowGaps} /> Lücken anzeigen
-					</label>
 					<div class="button-group">
 						<button on:click={callRandomizeColors1}>Randomize Colors</button>
-						<button on:click={callResetColors1}>Reset Colors</button>
-						<button on:click={callResetDefaults1}>Reset Defaults</button>
+					</div>
+					<label class="checkbox-label">
+						<input type="checkbox" bind:checked={raute1ShowGaps} on:change={callToggleGaps1} /> Lücken anzeigen
+					</label>
+					<label class="checkbox-label">
+						<input type="checkbox" bind:checked={raute1CompactSpacing} on:change={callToggleSpacing1} /> Kompakter Abstand
+					</label>
+					<div style="margin-top:8px;">
+						<label>Farbe 1: <input type="color" bind:value={raute1Colors[0]} /></label>
+						<label>Farbe 2: <input type="color" bind:value={raute1Colors[1]} /></label>
+						<label>Farbe 3: <input type="color" bind:value={raute1Colors[2]} /></label>
 					</div>
 				</div>
 			{/if}
@@ -309,18 +319,10 @@
 						Abstand Sterne: {raute2StarSpacing.toFixed(2)}
 						<input type="range" bind:value={raute2StarSpacing} min="0.2" max="3.5" step="0.01" />
 					</label>
+
 					<label class="checkbox-label">
 						<input type="checkbox" bind:checked={raute2ShowGaps} /> Lücken anzeigen
 					</label>
-					<div class="button-group">
-						<button on:click={callRandomizeColors2}>Randomize Colors</button>
-						<button on:click={callResetColors2}>Reset Colors</button>
-					</div>
-					<div style="margin-top:8px;">
-						<label>Farbe 1: <input type="color" bind:value={raute2Colors[0]} /></label>
-						<label>Farbe 2: <input type="color" bind:value={raute2Colors[1]} /></label>
-						<label>Farbe 3: <input type="color" bind:value={raute2Colors[2]} /></label>
-					</div>
 				</div>
 			{/if}
 
@@ -359,16 +361,6 @@
 					<h3>Raute 5 Controls</h3>
 					
 					<label>
-						Rows: {raute5Rows}
-						<input type="range" min="1" max="30" bind:value={raute5Rows} />
-					</label>
-					
-					<label>
-						Steps: {raute5Steps}
-						<input type="range" min="1" max="24" bind:value={raute5Steps} />
-					</label>
-					
-					<label>
 						Deckkraft 2. Dreieck: {raute5TriangleOpacity}
 						<input type="range" bind:value={raute5TriangleOpacity} min="0" max="100" step="1" />
 					</label>
@@ -393,16 +385,13 @@
 						Lücken anzeigen
 					</label>
 					
-					<div class="button-group">
-						<button on:click={callRandomizeColors5}>Randomize Colors</button>
-						<button on:click={callResetColors5}>Reset Colors</button>
-					</div>
+					
 
 					{#if raute5Selected}
 						<div class="color-picker-section">
 							<strong>Ausgewähltes Dreieck:</strong>
 							<div style="margin-top: 8px;">
-								<input type="color" bind:value={raute5SelectedColor} on:input={callApplySelectedColor5} />
+								<input type="color" bind:value={raute5SelectedColor} on:change={callApplySelectedColor5} />
 							</div>
 							<button on:click={applyAndDeselect5}>
 								Apply & Deselect
@@ -422,8 +411,6 @@
 			{#if selectedIndex === 4}
 				<Raute4 
 					bind:this={raute4Component}
-					bind:rows={raute4Rows}
-					bind:steps={raute4Steps}
 					bind:triangleOpacity={raute4TriangleOpacity}
 					bind:starSpacing={raute4StarSpacing}
 					bind:strokeWidth={raute4StrokeWidth}
@@ -437,12 +424,8 @@
 			{:else if selectedIndex === 1}
 				<Raute1
 					bind:this={raute1Component}
-					bind:rows={raute1Rows}
-					bind:steps={raute1Steps}
 					bind:triangleOpacity={raute1TriangleOpacity}
 					bind:starSpacing={raute1StarSpacing}
-					bind:patternIndex={raute1PatternIndex}
-					bind:monoColor={raute1MonoColor}
 					bind:showGaps={raute1ShowGaps}
 					bind:colors={raute1Colors}
 				/>
@@ -453,6 +436,7 @@
 					bind:steps={raute2Steps}
 					bind:triangleOpacity={raute2TriangleOpacity}
 					bind:starSpacing={raute2StarSpacing}
+
 					bind:showGaps={raute2ShowGaps}
 					bind:monoColor={raute2MonoColor}
 					bind:colors={raute2Colors}
@@ -472,8 +456,6 @@
 			{:else if selectedIndex === 5}
 				<Raute5 
 					bind:this={raute5Component}
-					bind:rows={raute5Rows}
-					bind:steps={raute5Steps}
 					bind:triangleOpacity={raute5TriangleOpacity}
 					bind:starSpacing={raute5StarSpacing}
 					bind:strokeWidth={raute5StrokeWidth}
