@@ -39,11 +39,57 @@ function buildDistortedRhombi(distortionScale) {
 		let rotatedRhombus = [];
 		for (let j = 0; j < baseRhombus.length; j++) {
 			const point = baseRhombus[j];
-			// Erst verzerren (in lokaler X-Richtung der Raute)
-			const distortedX = point[0] * distortionScale;
+			// Berechne, wie weit der Punkt entlang der Raute von innen (0) nach außen (1) liegt
+			// axis von point0 (y=0) nach point2 (y=-a*sqrt3) => t = -y / (a*sqrt3)
+			let t = -point[1] / (a * sqrt3);
+			if (t < 0) t = 0; if (t > 1) t = 1;
+			// Wir möchten Verzerrung nur auf die innere Hälfte (t in [0,0.5]) anwenden.
+			// Interpolationsfaktor: distortionScale at center (t=0) -> 1 at midpoint (t=0.5)
+			// Apply distortion only to the outer half (t in (0.5,1]).
+			// Inner half (t <= 0.5) remains unchanged to avoid creating gaps.
+			let localFactor = 1;
+			let distortedX;
+			// Two modes:
+			// - expansion (distortionScale >= 1): apply effect starting at effectStart (affects side + outer)
+			// - shrinking (distortionScale < 1): apply effect only to outer half (t>=0.5)
+			const effectStart = 0.25;
+			let u = 0;
+			if (distortionScale >= 1) {
+				if (t >= effectStart) {
+					u = Math.min(1, (t - effectStart) / (1 - effectStart)); // 0..1 across effect zone
+					localFactor = 1 + (distortionScale - 1) * u;
+					distortedX = point[0] * localFactor;
+				} else {
+					distortedX = point[0];
+				}
+			} else {
+				// shrinking: only outer half (t in [0.5,1]) is thinned
+				const outerStart = 0.5;
+				if (t >= outerStart) {
+					u = Math.min(1, (t - outerStart) / (1 - outerStart));
+					localFactor = 1 + (distortionScale - 1) * u;
+					distortedX = point[0] * localFactor;
+				} else {
+					distortedX = point[0];
+				}
+			}
 			const distortedY = point[1]; // Y bleibt gleich
 			// Dann rotieren
-			const rotated = rotatePoint(distortedX, distortedY, i * 60);
+			let rotated = rotatePoint(distortedX, distortedY, i * 60);
+
+			// Nach der Rotation: wenn der Punkt zur äußeren Zone gehört (u>0), schieben
+			// wir ihn stufenweise auf den Hexagon-Radius hinaus, damit die Rauten
+			// bei voller Verzerrung ein Sechseck bilden (keine Lücken mehr).
+			// Only apply outward push when we are expanding (distortionScale > 1)
+			if (u > 0 && distortionScale > 1) {
+				const hexRadius = a * sqrt3; // Zielradius für Sechseck-Kante
+				const dist = Math.hypot(rotated[0], rotated[1]);
+				if (dist > 1e-6) {
+					const targetScale = hexRadius / dist;
+					const outwardScale = 1 + u * (targetScale - 1);
+					rotated = [rotated[0] * outwardScale, rotated[1] * outwardScale];
+				}
+			}
 			rotatedRhombus.push(rotated);
 		}
 		distorted.push(rotatedRhombus);
@@ -65,7 +111,7 @@ function pointsToStr(points) {
 export let rows = 15;
 export let steps = 12;
 export let gapSize = 0.0;
-export let triangleOpacity = 50;
+export let triangleOpacity = 100;
 export let starSpacing = 1.0; // Default auf 1.0 für Raute 3
 export let rotation = 0;
 export let showGaps = true;

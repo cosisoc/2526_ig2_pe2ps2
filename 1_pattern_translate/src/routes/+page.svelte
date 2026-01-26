@@ -153,7 +153,7 @@ onMount(() => {
 	let raute3Component;
 	let raute3Rows = 15;
 	let raute3Steps = 12;
-	let raute3TriangleOpacity = 50;
+	let raute3TriangleOpacity = 100;
 	let raute3StarSpacing = 1.0;
 	let raute3RadialDistortion = 0.0;
 	let raute3MonoColor = false;
@@ -330,10 +330,7 @@ onMount(() => {
 			{#if selectedIndex === 3}
 				<div transition:slide class="raute4-controls">
 					<h3>Raute 3 Controls</h3>
-					<label>
-						Deckkraft 2. Dreieck: {raute3TriangleOpacity}
-						<input type="range" bind:value={raute3TriangleOpacity} min="0" max="100" step="1" />
-					</label>
+					<!-- Dreiecks-Deckkraft entfernt; Standard 100% -->
 					<label>
 						Abstand Sterne: {raute3StarSpacing.toFixed(2)}
 						<input type="range" bind:value={raute3StarSpacing} min="0.2" max="3.5" step="0.01" />
