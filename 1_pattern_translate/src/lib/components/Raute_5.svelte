@@ -155,9 +155,10 @@ const colorPatterns = [
 		localGapColors: {'60-1':'#8f8f8f','120-0':'#8e8e8e','0-0':'#454545','0-1':'#535353'}
 	},
 	{
-		name: 'Pattern 2 - Rot/Blau',
-		localTriColors: {'0-0':'#ffffff','1-0':'#ffffff','2-0':'#ffffff','3-0':'#ffffff','4-0':'#ffffff','5-0':'#ffffff','4-1':'#ffffff','5-1':'#ffffff','0-1':'#ffffff','3-1':'#ffffff','2-1':'#ffffff','1-1':'#ffffff'},
-		localGapColors: {'60-1':'#8f8f8f','120-0':'#8e8e8e','0-0':'#454545','0-1':'#535353'}
+	name: 'Pattern 2 - From Raute_4',
+	_importFromRaute4: true,
+	localTriColors: {},
+	localGapColors: {}
 	},
 	{
 		name: 'Pattern 3 - Grautöne',
