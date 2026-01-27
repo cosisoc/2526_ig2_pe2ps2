@@ -1,6 +1,5 @@
 <script>
 import Slider from '$lib/ui/Slider.svelte';
-import Toggle from '$lib/ui/Toggle.svelte';
 import RangeSlider from '$lib/ui/RangeSlider.svelte';
 
 // Größe einer Raute
@@ -333,7 +332,45 @@ function computePastelFromColors(arr) {
 	return rgbToHex(pastelRgb);
 }
 
-$: backgroundColor = computePastelFromColors(colors);
+// Compute background from palette but invert the relation to displayed lightness:
+// when the raute/displayed colors become lighter, make the background slightly darker,
+// and vice versa. This keeps contrast while still deriving hue from the palette.
+function computeBackgroundFromColors(colorsArr, displayArr) {
+	const baseHex = computePastelFromColors(colorsArr);
+	const baseHsl = rgbToHsl(hexToRgb(baseHex));
+
+	// average displayed lightness (0-100)
+	let avg = 50;
+	if (displayArr && displayArr.length) {
+		avg = displayArr.reduce((s, c) => s + rgbToHsl(hexToRgb(c)).l, 0) / displayArr.length;
+	}
+
+	// factor in [-1,1], positive when display is lighter than mid
+	const factor = (avg - 50) / 50;
+
+	// maximum lightness adjustment (in percent points) — increased so bright raute -> noticeably darker bg
+	const maxAdjust = 28;
+	// invert sign: brighter display -> negative adjust (darker bg)
+	const adjust = -factor * maxAdjust;
+	baseHsl.l = Math.max(45, Math.min(95, baseHsl.l + adjust));
+
+	// If display lightness is near midpoint, mute/desaturate the background towards gray
+	// so the raute shapes remain clearly visible.
+	const absFactor = Math.abs(factor);
+	const threshold = 0.16; // ~ +/-8 lightness
+	if (absFactor < threshold) {
+		// t==1 at exact midpoint, 0 at threshold edge
+		const t = 1 - absFactor / threshold;
+		const grayL = 84;
+		// reduce saturation up to 90% and move lightness partly towards gray
+		baseHsl.s = baseHsl.s * (1 - 0.9 * t);
+		baseHsl.l = baseHsl.l * (1 - 0.6 * t) + grayL * (0.6 * t);
+	}
+
+	return rgbToHex(hslToRgb(baseHsl));
+}
+
+$: backgroundColor = computeBackgroundFromColors(colors, displayColors);
 </script>
 
 <div class="svg-container" style="background: {backgroundColor};">
@@ -404,7 +441,7 @@ $: backgroundColor = computePastelFromColors(colors);
 		<Slider min={0} max={4} step={0.1} bind:value={strokeWidth} label="Linienstärke" />
 		<Slider min={0.06} max={5} step={0.01} bind:value={starSpacing} label="Abstand Sterne" />
 		
-		<Toggle bind:value={monoColor} label="Mono Color" />
+		
 		<hr />
 		<label style="display:block; margin-bottom:6px; font-weight:600;">Presets</label>
 		<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
