@@ -132,7 +132,7 @@ export let rotation = 0;
 export let showGaps = true;
 export let monoColor = false;
 export let radialDistortion = 0.0; // Verzerrung: 0=normal, >0=Sterne breiter, <0=Gaps breiter
-export let strokeWidth = 0.2;
+const strokeWidth = 0.0;
 
 // Verzerrung NUR in X-Richtung (Breite), Y bleibt konstant
 // Bei radialDistortion > 0: Stern-Rauten werden breiter, Gap-Rauten schmaler
@@ -231,11 +231,11 @@ $: moduleCenters = (() => {
 	const baseRowSpacing = staticMetrics.rowSpacing;
 	const baseDist = staticMetrics.baseDistance;
 	const centerOffsetY = -((rows - 1) / 2) * baseRowSpacing;
-	
+
 	for (let row = 0; row < rows; row++) {
 		const baseY = row * baseRowSpacing + centerOffsetY;
 		const xShift = (row % 2 === 1) ? staticMetrics.halfModuleWidth : 0;
-		
+
 		for (let col = -steps; col <= steps; col++) {
 			const baseX = col * baseDist + xShift;
 			stars.push({
@@ -255,23 +255,23 @@ $: gapCenters = (() => {
 	const centerOffsetY = -((rows - 1) / 2) * baseRowSpacing;
 	// Gap-Abstand bleibt konstant (original Größe)
 	const baseGapDistance = a * sqrt3;
-	
+
 	for (let row = 0; row < rows; row++) {
 		const baseY = row * baseRowSpacing + centerOffsetY;
 		const xShift = (row % 2 === 1) ? staticMetrics.halfModuleWidth : 0;
-		
+
 		for (let col = -steps; col <= steps; col++) {
 			const baseCenterX = col * baseDist + xShift;
 			const baseCenterY = baseY;
-			
+
 			const angles = [30, 90, 150];
 			const rotations = [0, 60, 120];
-			
+
 			for (let i = 0; i < 3; i++) {
 				const rad = angles[i] * Math.PI / 180;
 				const baseGapX = baseCenterX + baseGapDistance * Math.cos(rad);
 				const baseGapY = baseCenterY + baseGapDistance * Math.sin(rad);
-				
+
 				gaps.push({
 					x: baseGapX * actualDistance,
 					y: baseGapY * actualDistance,
@@ -323,14 +323,14 @@ $: gapColorMap = monoColor ? {
 							points={pointsToStr([rhombus[0], rhombus[3], rhombus[2]])} 
 							fill={colorMap[i]} 
 							stroke="#000" 
-								stroke-width={strokeWidth} 
+							stroke-width="0" 
 						/>
 						<polygon 
 							points={pointsToStr([rhombus[0], rhombus[1], rhombus[2]])} 
 							fill={colorMap[i]} 
 							fill-opacity={triangleOpacity / 100} 
 							stroke="#000" 
-								stroke-width={strokeWidth} 
+							stroke-width="0" 
 						/>
 						<line 
 							x1={rhombus[0][0]} 
@@ -338,26 +338,27 @@ $: gapColorMap = monoColor ? {
 							x2={rhombus[2][0]} 
 							y2={rhombus[2][1]} 
 							stroke="#000" 
-								stroke-width={strokeWidth} 
+							stroke-width="0" 
 						/>
 					{/each}
 				</g>
 			{/each}
 
+			{#if showGaps}
 			{#each gapCenters as gap}
 				<g transform="translate({gap.x} {gap.y}) rotate({rotation + gap.rotation})">
 					<polygon 
 						points={pointsToStr([distortedGapRhombus[0], distortedGapRhombus[3], distortedGapRhombus[2]])} 
 						fill={gapColorMap[gap.rotation] || colors[1]} 
 						stroke="#000" 
-						stroke-width={strokeWidth} 
+						stroke-width="0" 
 					/>
 					<polygon 
 						points={pointsToStr([distortedGapRhombus[0], distortedGapRhombus[1], distortedGapRhombus[2]])} 
 						fill={gapColorMap[gap.rotation] || colors[1]} 
 						fill-opacity={triangleOpacity / 100} 
 						stroke="#000" 
-						stroke-width={strokeWidth} 
+						stroke-width="0" 
 					/>
 					<line 
 						x1={distortedGapRhombus[0][0]} 
@@ -365,43 +366,44 @@ $: gapColorMap = monoColor ? {
 						x2={distortedGapRhombus[2][0]} 
 						y2={distortedGapRhombus[2][1]} 
 						stroke="#000" 
-						stroke-width={strokeWidth} 
+						stroke-width="0" 
 					/>
 				</g>
 			{/each}
+			{/if}
 			{/key}
 		</svg>
 		</div>
 
-	</div>
+</div>
 
-	<div class="sidebar-right">
-		<Slider min={0} max={100} bind:value={triangleOpacity} label="Deckkraft 2. Dreieck" />
-		<Slider min={-6} max={1} step={0.01} bind:value={radialDistortion} label="Radial Distortion" />
-		<Slider min={0} max={4} step={0.1} bind:value={strokeWidth} label="Linienstärke" />
-		<Toggle bind:value={monoColor} label="Mono Color" />
-		<hr />
-		<EditableColorPalette bind:colors width={310} swatchSize={35} />
-	</div>
+<div class="sidebar-right">
+	<Slider min={0} max={100} bind:value={triangleOpacity} label="Deckkraft 2. Dreieck" />
+	<Slider min={-6} max={1} step={0.01} bind:value={radialDistortion} label="Radial Distortion" />
+	<Toggle bind:value={monoColor} label="Mono Color" />
+	<hr />
+	<EditableColorPalette bind:colors width={310} swatchSize={35} />
+	
+</div>
 
-	<style>
-	.svg-container {
-		flex: 1;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: #f5f5f5;
-		gap: 0;
-		padding: 0;
-		box-sizing: border-box;
-	}
+<style>
+.svg-container {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #f5f5f5;
+	gap: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
 
-	.svg-canvas {
-		width: 100%;
-		height: 100%;
-		background: white;
-		border: 1px solid #ddd;
-	}
+.svg-canvas {
+	width: 100%;
+	height: 100%;
+	background: white;
+	border: 1px solid #ddd;
+}
 
 	.controls {
 		width: 300px;

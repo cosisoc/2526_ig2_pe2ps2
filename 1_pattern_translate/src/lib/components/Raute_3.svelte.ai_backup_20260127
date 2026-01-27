@@ -1,0 +1,148 @@
+<script>
+  export let width = 640;
+  export let height = 640;
+
+  // controls
+  export let radialDistortion = 0.0;
+  export let strokeWidth = 0.0;
+  export let triangleOpacity = 1.0;
+
+  // palette: three hex colors
+  export let colors = ['#FF6B6B', '#FFD93D', '#6BCB77'];
+
+  // lightness remap range (0..1)
+  export let minLight = 0.22;
+  export let maxLight = 0.82;
+
+  // geometry
+  const cols = 6;
+  const rows = 6;
+  const baseSize = 34;
+  const sqrt3 = Math.sqrt(3);
+
+  // --- color helpers ---
+  function hexToRgb(hex){
+    const h = hex.replace('#','');
+    const bigint = parseInt(h,16);
+    if(h.length===6){
+      return {r:(bigint>>16)&255, g:(bigint>>8)&255, b:bigint&255};
+    }
+    return {r:0,g:0,b:0};
+  }
+
+  function rgbToHex({r,g,b}){
+    return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+  }
+
+  function rgbToHsl({r,g,b}){
+    r/=255;g/=255;b/=255;
+    const max=Math.max(r,g,b), min=Math.min(r,g,b);
+    let h=0,s=0,l=(max+min)/2;
+    if(max!==min){
+      const d = max-min;
+      s = l>0.5 ? d/(2-max-min) : d/(max+min);
+      switch(max){
+        case r: h = (g-b)/d + (g<b?6:0); break;
+        case g: h = (b-r)/d + 2; break;
+        case b: h = (r-g)/d + 4; break;
+      }
+      h /= 6;
+    }
+    return {h: h*360, s, l};
+  }
+
+  function hslToRgb(hsl){
+    let {h,s,l} = hsl; h = ((h%360)+360)/360;
+    if(s===0){
+      const v = Math.round(l*255);
+      return {r:v,g:v,b:v};
+    }
+    function hue2rgb(p,q,t){
+      if(t<0) t+=1; if(t>1) t-=1;
+      if(t<1/6) return p + (q-p)*6*t;
+      if(t<1/2) return q;
+      if(t<2/3) return p + (q-p)*(2/3 - t)*6;
+      return p;
+    }
+    const q = l<0.5 ? l*(1+s) : l+s - l*s;
+    const p = 2*l - q;
+    const r = Math.round(255*hue2rgb(p,q,h+1/3));
+    const g = Math.round(255*hue2rgb(p,q,h));
+    const b = Math.round(255*hue2rgb(p,q,h-1/3));
+    return {r,g,b};
+  }
+
+  // derive display colors by remapping lightness
+  $: displayColors = colors.map(hex => {
+    const rgb = hexToRgb(hex);
+    const hsl = rgbToHsl(rgb);
+    const capFactor = 0.9;
+    const effMax = Math.min(1, maxLight * capFactor + (1 - capFactor));
+    const newL = minLight + (hsl.l - 0.0) * (effMax - minLight);
+    const rgb2 = hslToRgb({h: hsl.h, s: hsl.s, l: Math.max(0, Math.min(1, newL))});
+    return rgbToHex(rgb2);
+  });
+
+  // compute module centers
+  function moduleCenters(){
+    const centers = [];
+    const dx = baseSize * 1.5;
+    const dy = baseSize * sqrt3 / 2;
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        const x = c*dx + (r%2?dx/2:0);
+        const y = r*dy*1.9;
+        centers.push({x, y});
+      }
+    }
+    return centers;
+  }
+
+  $: centers = moduleCenters();
+
+  // build a single rhombus polygon path centered at 0
+  function rhombusPath(size){
+    const h = size;
+    const w = size/1.2;
+    const pts = [
+      {x:0, y:-h},
+      {x:w, y:0},
+      {x:0, y:h},
+      {x:-w, y:0}
+    ];
+    return pts.map(p=>`${p.x},${p.y}`).join(' ');
+  }
+
+  function translate(path,x,y,distort=0){
+    // apply slight radial distortion towards/away from center
+    const segs = path.split(' ').map(pair=>{
+      const [px,py] = pair.split(',').map(Number);
+      const rx = px + (px * distort);
+      const ry = py + (py * distort);
+      return `${rx + x},${ry + y}`;
+    });
+    return segs.join(' ');
+  }
+
+  $: cellPath = rhombusPath(baseSize);
+
+  // final list of polygons to render: map centers to displayColors
+  $: polygons = centers.map((c, i)=>{
+    const color = displayColors[i % displayColors.length];
+    const path = translate(cellPath, c.x + width/2 - (cols*baseSize/2), c.y + height/2 - (rows*baseSize/2), radialDistortion*0.08);
+    return {path, color};
+  });
+</script>
+
+<style>
+  :global(svg){ display:block; }
+  .raute-layer{ mix-blend-mode:normal }
+</style>
+
+<svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} preserveAspectRatio="xMidYMid meet">
+  <g class="raute-layer">
+    {#each polygons as p}
+      <polygon points={p.path} fill={p.color} stroke="none" opacity={triangleOpacity} />
+    {/each}
+  </g>
+</svg>
