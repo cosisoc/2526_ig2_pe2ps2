@@ -174,19 +174,20 @@ $: starScale = Math.min(starSpacing, 1.0);
 $: gapScale = actualDistance;
 
 // Farben
-const defaultColors = ['#91A599', '#849179', '#B6CDC7'];
-export let colors = ['#91A599', '#849179', '#B6CDC7'];
+const defaultColors = ['#6B8A5F', '#2E5F3A', '#D8F0E2'];
+export let colors = ['#6B8A5F', '#2E5F3A', '#D8F0E2'];
+
 
 // Presets: arrays of three colors
 const presets = [
-	['#A0B5A8', '#849179', '#B6CDC7'],
+	['#A0B5A8', '#2E5F3A', '#D8F0E2'],
 	['#F6D6AD', '#F28C66', '#C85A3A'],
 	['#D6EAF8', '#8FBFE0', '#2A6F97'],
 	['#FFE6F0', '#FF9EC3', '#FF5A9E'],
 	['#FFF4D6', '#FFD27A', '#FF9B3B']
 ];
 
-let selectedPreset = 0;
+let selectedPreset = 1; // use the warm preset (#F6D6AD) by default
 
 // Lightness range and brightness adjustment
 let minLight = 20; // percent
@@ -196,6 +197,9 @@ function selectPreset(i) {
 	selectedPreset = i;
 	colors = [...presets[i]];
 }
+
+// initialize colors from the selected preset on load
+colors = [...presets[selectedPreset]];
 
 // color helpers (hex <-> rgb <-> hsl)
 function hexToRgb(hex) {
@@ -266,7 +270,7 @@ $: displayColors = colors.map(hex => {
 
 // Vordefinierte Farbpaletten
 const colorPalettes = [
-	{ name: 'Grün Töne', colors: ['#91A599', '#849179', '#B6CDC7'] },
+	{ name: 'Grün Töne', colors: ['#6B8A5F', '#2E5F3A', '#D8F0E2'] },
 	{ name: 'Sunset', colors: ['#FF6B6B', '#FFD93D', '#6BCF7F'] },
 	{ name: 'Ocean', colors: ['#1E3A8A', '#3B82F6', '#93C5FD'] },
 	{ name: 'Purple Dream', colors: ['#7C3AED', '#C084FC', '#E9D5FF'] },
@@ -294,7 +298,7 @@ export function randomizeColors() {
 }
 
 export function resetColors() {
-	colors = ['#91A599', '#849179', '#B6CDC7'];
+	colors = ['#6B8A5F', '#2E5F3A', '#D8F0E2'];
 }
 
 export function toggleMonoColor() {
@@ -309,7 +313,7 @@ export function resetToDefaults() {
 	showGaps = true;
 	monoColor = false;
 	radialDistortion = 0.0;
-	colors = ['#91A599', '#849179', '#B6CDC7'];
+	colors = ['#6B8A5F', '#2E5F3A', '#D8F0E2'];
 }
 
 // Sternpositionen berechnen - nutze STATISCHE Metriken (keine Verzerrung der Positionen)
@@ -465,7 +469,7 @@ $: gapColorMap = monoColor ? {
 </div>
 
 <div class="sidebar-right">
-	<Slider min={-6} max={1} step={0.01} bind:value={radialDistortion} label="Radial Distortion" />
+	<Slider min={-6.7} max={0} step={0.01} bind:value={radialDistortion} label="Radial Distortion" />
 	<hr />
 	<div style="width:310px;">
 		<label style="display:block; margin-bottom:6px; font-weight:600;">Presets</label>

@@ -37,5 +37,5 @@ function fmt(v) { return v + 'px'; }
 <style>
 /* minimal page styles to keep UI clean */
 h3 { font-family: Arial, sans-serif; font-size:16px; }
-button { background:#91A599; color:white; border:none; border-radius:4px; cursor:pointer }
+button { background:#6B8A5F; color:white; border:none; border-radius:4px; cursor:pointer }
 </style>

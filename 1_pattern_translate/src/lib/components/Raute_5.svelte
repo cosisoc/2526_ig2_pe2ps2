@@ -126,7 +126,7 @@ function pointsToStr(points) {
 export let rows = 15;
 export let steps = 12;
 export let gapSize = 0.0;
-export let triangleOpacity = 50;
+export let triangleOpacity = 100;
 export let starSpacing = 1.0; // Default auf 1.0 für Raute 3
 export let strokeWidth = 0.2;
 export let scale = 1.0;
@@ -151,8 +151,8 @@ export let colorPatternIndex = 0;
 const colorPatterns = [
 	{
 		name: 'Pattern 1',
-		localTriColors: {'0-0':'#ffffff','1-0':'#ffffff','2-0':'#ffffff','3-0':'#ffffff','4-0':'#ffffff','5-0':'#ffffff','4-1':'#ffffff','5-1':'#ffffff','0-1':'#ffffff','3-1':'#ffffff','2-1':'#ffffff','1-1':'#ffffff'},
-		localGapColors: {'60-1':'#8f8f8f','120-0':'#8e8e8e','0-0':'#454545','0-1':'#535353'}
+		localTriColors: {'0-0':'#ffffff','0-1':'#ffffff','1-0':'#ffffff','1-1':'#ffffff','2-0':'#ffffff','2-1':'#ffffff','3-0':'#ffffff','3-1':'#ffffff','4-0':'#000000','4-1':'#000000','5-0':'#000000','5-1':'#ffffff'},
+		localGapColors: {'0-0':'#ffffff','0-1':'#ffffff','60-0':'#000000','60-1':'#ffffff','120-0':'#000000','120-1':'#ffffff'}
 	},
 	{
 	name: 'Pattern 2 - From Raute_4',
@@ -228,12 +228,12 @@ $: starScale = Math.min(starSpacing, 1.0);
 $: gapScale = actualDistance;
 
 // Farben
-const defaultColors = ['#91A599', '#849179', '#B6CDC7'];
+const defaultColors = ['#6B8A5F', '#2E5F3A', '#D8F0E2'];
 export let colors = ['#91A599', '#849179', '#B6CDC7'];
 
 // Vordefinierte Farbpaletten
 const colorPalettes = [
-	{ name: 'Grün Töne', colors: ['#91A599', '#849179', '#B6CDC7'] },
+	{ name: 'Grün Töne', colors: ['#6B8A5F', '#2E5F3A', '#D8F0E2'] },
 	{ name: 'Sunset', colors: ['#FF6B6B', '#FFD93D', '#6BCF7F'] },
 	{ name: 'Ocean', colors: ['#1E3A8A', '#3B82F6', '#93C5FD'] },
 	{ name: 'Purple Dream', colors: ['#7C3AED', '#C084FC', '#E9D5FF'] },
@@ -261,7 +261,7 @@ export function randomizeColors() {
 }
 
 export function resetColors() {
-	colors = ['#91A599', '#849179', '#B6CDC7'];
+	colors = ['#6B8A5F', '#2E5F3A', '#D8F0E2'];
 }
 
 export function toggleMonoColor() {
@@ -276,7 +276,7 @@ export function resetToDefaults() {
 	showGaps = true;
 	monoColor = false;
 	radialDistortion = 0.0;
-	colors = ['#91A599', '#849179', '#B6CDC7'];
+ 	colors = ['#6B8A5F', '#2E5F3A', '#D8F0E2'];
 }
 
 export function applyColorPattern(index) {
@@ -378,7 +378,7 @@ $: gapCenters = (() => {
 	}
 
 	function defaultColorFor(rhombusIndex, triIndex) {
-		const palette = ['#91A599', '#849179', '#B6CDC7', '#F29E4C', '#C94C4C'];
+	const palette = ['#6B8A5F', '#2E5F3A', '#D8F0E2', '#F29E4C', '#C94C4C'];
 		const idx = (rhombusIndex * 2 + triIndex) % palette.length;
 		return palette[idx];
 	}
@@ -484,6 +484,7 @@ onMount(() => {
 	<!-- Mitte: SVG Pattern -->
 	<div style="flex: 1; height: 100%; display: flex; align-items: center; justify-content: center;">
 		<svg viewBox="-900 -1000 1800 2000" class="svg-canvas" shape-rendering="crispEdges" style="max-width: 100%; max-height: 100%; aspect-ratio: 0.9;">
+		<g transform="scale({scale})">
 			{#key [colors, radialDistortion]}
 			{#each moduleCenters as star}
 				<g transform="translate({star.x} {star.y}) rotate({rotation}) scale({starScale})">
@@ -544,8 +545,9 @@ onMount(() => {
 				</g>
 			{/each}
 			{/if}
-			{/key}
-		</svg>
+				{/key}
+			</g>
+			</svg>
 		</div>
 
 	</div>
@@ -553,11 +555,10 @@ onMount(() => {
 	<div class="sidebar-right">
 		<Slider min={0} max={colorPatterns.length - 1} step={1} bind:value={colorPatternIndex} label="Farbmuster ({colorPatterns[colorPatternIndex].name})" />
 			<Slider min={0} max={100} bind:value={triangleOpacity} label="Deckkraft 2. Dreieck" />
-			<Slider min={-6} max={1} step={0.01} bind:value={radialDistortion} label="Radial Distortion" />
-		<Slider min={0.2} max={3.5} step={0.01} bind:value={starSpacing} label="Abstand Sterne" />
-		<Slider min={0} max={4} step={0.1} bind:value={strokeWidth} label="Linienstärke" />
+			<Slider min={-6.7} max={0} step={0.01} bind:value={radialDistortion} label="Radial Distortion" />
+		
 		<Slider min={0.3} max={3} step={0.05} bind:value={scale} label="Zoom" />
-		<Toggle bind:value={showGaps} label="Lücken anzeigen" />
+		
 		{#if selected}
 			<hr />
 			<div class="label">Ausgewähltes Dreieck:</div>

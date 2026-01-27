@@ -81,8 +81,8 @@ $: d = baseDistance * actualDistance;
 $: verticalSpacing = rowSpacing * actualDistance;
 
 // Farben
-const defaultColors = ['#91A599', '#849179', '#B6CDC7'];
-export let colors = ['#91A599', '#849179', '#B6CDC7'];
+const defaultColors = ['#6B8A5F', '#2E5F3A', '#D8F0E2'];
+export let colors = ['#6B8A5F', '#2E5F3A', '#D8F0E2'];
 
 // Lightness range
 let minLight = 20;
@@ -157,7 +157,7 @@ $: displayColors = colors.map(hex => {
 
 // Vordefinierte Farbpaletten
 const colorPalettes = [
-	{ name: 'Grün Töne', colors: ['#91A599', '#849179', '#B6CDC7'] },
+	{ name: 'Grün Töne', colors: ['#6B8A5F', '#2E5F3A', '#D8F0E2'] },
 	{ name: 'Sunset', colors: ['#FF6B6B', '#FFD93D', '#6BCF7F'] },
 	{ name: 'Ocean', colors: ['#1E3A8A', '#3B82F6', '#93C5FD'] },
 	{ name: 'Purple Dream', colors: ['#7C3AED', '#C084FC', '#E9D5FF'] },
@@ -173,19 +173,22 @@ const colorPalettes = [
 
 // Presets: arrays of three colors (same as Raute_1)
 const presets = [
-	['#A0B5A8', '#849179', '#B6CDC7'],
+	['#6B8A5F', '#91A599', '#D6EDE0'], // higher-contrast greens (adjusted)
 	['#F6D6AD', '#F28C66', '#C85A3A'],
-	['#D6EAF8', '#8FBFE0', '#2A6F97'],
+	['#1E3A8A', '#3B82F6', '#93C5FD'], // Ocean / blue palette
 	['#FFE6F0', '#FF9EC3', '#FF5A9E'],
 	['#FFF4D6', '#FFD27A', '#FF9B3B']
 ];
 
-let selectedPreset = 0;
+let selectedPreset = 2; // default to blue preset
 
 function selectPreset(i) {
 	selectedPreset = i;
 	colors = [...presets[i]];
 }
+
+// initialize colors from the selected preset on load
+colors = [...presets[selectedPreset]];
 
 export function applyPalette(palette) {
 	colors = [...palette.colors];
@@ -201,7 +204,7 @@ export function randomizeColors() {
 }
 
 export function resetColors() {
-	colors = ['#91A599', '#849179', '#B6CDC7'];
+	colors = ['#6B8A5F', '#2E5F3A', '#D8F0E2'];
 }
 
 export function toggleGaps() {
@@ -309,12 +312,34 @@ $: gapColorMap = monoColor ? {
 	60: displayColors[1],
 	120: displayColors[2]
 };
+
+// Compute a light, desaturated pastel background color derived from the current palette `colors`.
+function computePastelFromColors(arr) {
+	if (!arr || arr.length === 0) return '#f5f5f5';
+	// average RGB of provided palette
+	let r = 0, g = 0, b = 0;
+	for (let c of arr) {
+		const rgb = hexToRgb(c || '#ffffff');
+		r += rgb.r; g += rgb.g; b += rgb.b;
+	}
+	r /= arr.length; g /= arr.length; b /= arr.length;
+	// convert to HSL
+	const hsl = rgbToHsl({ r, g, b });
+	// make pastel a bit more vivid: increase saturation and keep lightness high
+	// (still restrained so the background stays soft but "knalliger")
+	hsl.s = Math.max(18, Math.min(60, hsl.s * 0.65 + 18));
+	hsl.l = Math.max(80, Math.min(92, hsl.l * 0.4 + 56));
+	const pastelRgb = hslToRgb(hsl);
+	return rgbToHex(pastelRgb);
+}
+
+$: backgroundColor = computePastelFromColors(colors);
 </script>
 
-<div class="svg-container">
+<div class="svg-container" style="background: {backgroundColor};">
 	<!-- Mitte: SVG Pattern -->
 	<div style="flex: 1; height: 100%; display: flex; align-items: center; justify-content: center;">
-		<svg viewBox="-900 -1000 1800 2000" class="svg-canvas" shape-rendering="crispEdges" style="max-width: 100%; max-height: 100%; aspect-ratio: 0.9;">
+ 		<svg viewBox="-900 -1000 1800 2000" class="svg-canvas" shape-rendering="crispEdges" style="max-width: 100%; max-height: 100%; aspect-ratio: 0.9;">
 			{#key colors}
 			{#each moduleCenters as star}
 				<g transform="translate({star.x} {star.y}) rotate({rotation}) scale({starScale})">
@@ -356,7 +381,6 @@ $: gapColorMap = monoColor ? {
 						points={pointsToStr([baseRhombus[0], baseRhombus[1], baseRhombus[2]])} 
 						fill={gapColorMap[gap.rotation] || colors[1]} 
 						fill-opacity={triangleOpacity / 100} 
-						stroke="#000" 
 						stroke-width={strokeWidth} 
 					/>
 					<line 
@@ -405,7 +429,7 @@ $: gapColorMap = monoColor ? {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background: #f5f5f5;
+		background: #ffffff;
 		gap: 0;
 		padding: 0;
 		box-sizing: border-box;
@@ -414,7 +438,7 @@ $: gapColorMap = monoColor ? {
 	.svg-canvas {
 		width: 100%;
 		height: 100%;
-		background: white;
+		background: transparent;
 		border: 1px solid #ddd;
 	}
 

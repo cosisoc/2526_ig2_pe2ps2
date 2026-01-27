@@ -1,8 +1,6 @@
 <script>
 import Slider from '$lib/ui/Slider.svelte';
 import Toggle from '$lib/ui/Toggle.svelte';
-import SliderH from '$lib/ui/ColorPicker/SliderH_HSV.svelte';
-import { parse, converter } from 'culori';
 
 // Größe einer Raute
 const a = 120;
@@ -62,7 +60,7 @@ const baseDistance = a * sqrt3 * 1.727;
 const rowSpacing = moduleHeight * 0.75;
 
 // Slider Werte (props in runes mode)
-let { rows = 15, steps = 12, gapSize = 0.0, triangleOpacity = 50, starSpacing = 1.0, rotation = 0, showGaps = true, monoColor = true, colors = ['#91A599', '#849179', '#B6CDC7'] } = $props();
+let { rows = 15, steps = 12, gapSize = 0.0, triangleOpacity = 50, starSpacing = 1.0, rotation = 0, showGaps = true, monoColor = true, colors = ['#a8d8ff', '#6aa0e6', '#e6f7ff'] } = $props();
 
 // Wenn starSpacing < 1.0: Sterne werden kleiner, Abstand bleibt 1.0
 // Wenn starSpacing >= 1.0: Sterne bleiben normal, Abstand wird größer
@@ -73,72 +71,11 @@ let d = $derived(baseDistance * actualDistance);
 let verticalSpacing = $derived(rowSpacing * actualDistance);
 
 // Farben
-const defaultColors = ['#91A599', '#849179', '#B6CDC7'];
-
-// HSV state for first color (used by the hue slider)
-const toHSV = converter('okhsv');
-const toRGB = converter('rgb');
+const defaultColors = ['#a8d8ff', '#6aa0e6', '#e6f7ff'];
 
 function clamp01(v) {
-	if (v == null || Number.isNaN(v)) return 0;
-	return Math.max(0, Math.min(1, v));
-}
-
-let hsvForFirst = [0, 1, 1];
-let updatingFromHsv = false;
-
-$effect(() => {
-	if (updatingFromHsv) return;
-	const parsed = parse(colors[0]);
-	if (parsed) {
-		const ok = toHSV(parsed) || {};
-		const newH = ok.h ?? 0;
-		const newS = clamp01(ok.s ?? 1);
-		const newV = clamp01(ok.v ?? 1);
-		if (newH !== hsvForFirst[0] || newS !== hsvForFirst[1] || newV !== hsvForFirst[2]) {
-			hsvForFirst = [newH, newS, newV];
-			try { console.log('0_Raute: synced hsvForFirst from colors[0]', hsvForFirst, colors[0]); } catch (err) {}
-		}
-	}
-});
-
-$effect(() => {
-	// sync hsvForFirst -> colors[0]
-	const ok = { mode: 'okhsv', h: hsvForFirst[0], s: hsvForFirst[1], v: hsvForFirst[2] };
-	const rgb = toRGB(ok) || {};
-	function toHexFromRgb(rgbObj) {
-		const r = Math.round(clamp01(rgbObj.r) * 255);
-		const g = Math.round(clamp01(rgbObj.g) * 255);
-		const b = Math.round(clamp01(rgbObj.b) * 255);
-		function two(n) { return n.toString(16).padStart(2, '0'); }
-		return ('#' + two(r) + two(g) + two(b)).toLowerCase();
-	}
-	const hex = toHexFromRgb(rgb);
-	if (hex && hex.toLowerCase() !== (colors[0] || '').toLowerCase()) {
-		updatingFromHsv = true;
-		colors = [hex, colors[1] ?? defaultColors[1], colors[2] ?? defaultColors[2]];
-		try { console.log('0_Raute: updated colors ->', colors, 'from hsv', hsvForFirst); } catch (err) {}
-		updatingFromHsv = false;
-	}
-});
-
-function updateColorsFromHsv(hsvArr) {
-	const ok = { mode: 'okhsv', h: hsvArr[0], s: hsvArr[1], v: hsvArr[2] };
-	const rgb = toRGB(ok) || {};
-	function toHexFromRgb(rgbObj) {
-		const r = Math.round(clamp01(rgbObj.r) * 255);
-		const g = Math.round(clamp01(rgbObj.g) * 255);
-		const b = Math.round(clamp01(rgbObj.b) * 255);
-		function two(n) { return n.toString(16).padStart(2, '0'); }
-		return ('#' + two(r) + two(g) + two(b)).toLowerCase();
-	}
-	const hex = toHexFromRgb(rgb);
-	if (hex) {
-		updatingFromHsv = true;
-		colors = [hex, colors[1] ?? defaultColors[1], colors[2] ?? defaultColors[2]];
-		try { console.log('0_Raute:updateColorsFromHsv set colors', colors); } catch (err) {}
-		updatingFromHsv = false;
-	}
+    if (v == null || Number.isNaN(v)) return 0;
+    return Math.max(0, Math.min(1, v));
 }
 
 function randomColor() {
@@ -151,7 +88,7 @@ export function randomizeColors() {
 }
 
 export function resetColors() {
-	colors = ['#91A599', '#849179', '#B6CDC7'];
+    colors = ['#a8d8ff', '#6aa0e6', '#e6f7ff'];
 }
 
 export function toggleGaps() {
@@ -163,13 +100,13 @@ export function toggleMonoColor() {
 }
 
 export function resetToDefaults() {
-	gapSize = 0.0;
-	triangleOpacity = 50;
-	starSpacing = 1.0;
-	rotation = 0;
-	showGaps = true;
-	monoColor = true;
-	colors = ['#91A599', '#849179', '#B6CDC7'];
+    gapSize = 0.0;
+    triangleOpacity = 50;
+    starSpacing = 1.0;
+    rotation = 0;
+    showGaps = true;
+    monoColor = true;
+    colors = ['#a8d8ff', '#6aa0e6', '#e6f7ff'];
 }
 
 // Sternpositionen berechnen
@@ -311,12 +248,7 @@ $effect(() => {
 <div class="sidebar-right">
 	<Slider min={0} max={100} bind:value={triangleOpacity} label="Deckkraft 2. Dreieck" />
 	<Slider min={0} max={360} bind:value={rotation} label="Rotation" />
-	<!-- Hue slider for first color -->
-	<div style="width: 310px;">
-		<label style="display:block; font-size:0.9rem; margin-bottom:6px;">Hue: Farbe 1</label>
-		<SliderH bind:hsvValues={hsvForFirst} width={310} onchangeColor={updateColorsFromHsv} />
-	</div>
-	<hr />
+	
 	
 </div>
 
