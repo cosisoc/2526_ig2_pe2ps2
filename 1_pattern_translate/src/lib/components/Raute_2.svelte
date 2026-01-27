@@ -65,12 +65,12 @@ export let rows = 15;
 export let steps = 12;
 export let gapSize = 0.0;
 export let triangleOpacity = 50;
-export let starSpacing = 0.8;
+export let starSpacing = 1.0;
 export let starOffset = 0;
 export let rotation = 0;
 export let showGaps = true;
 export let monoColor = false;
-export let strokeWidth = 0.2;
+export let strokeWidth = 0.0;
 
 // Wenn starSpacing < 1.0: Sterne werden kleiner, Abstand bleibt 1.0
 // Wenn starSpacing >= 1.0: Sterne bleiben normal, Abstand wird größer
@@ -180,7 +180,7 @@ const presets = [
 	['#FFF4D6', '#FFD27A', '#FF9B3B']
 ];
 
-let selectedPreset = -1;
+let selectedPreset = 0;
 
 function selectPreset(i) {
 	selectedPreset = i;
@@ -378,17 +378,17 @@ $: gapColorMap = monoColor ? {
 	<div class="sidebar-right">
 		<Slider min={0} max={100} bind:value={triangleOpacity} label="Deckkraft 2. Dreieck" />
 		<Slider min={0} max={4} step={0.1} bind:value={strokeWidth} label="Linienstärke" />
-		<Slider min={0.2} max={3.5} step={0.01} bind:value={starSpacing} label="Abstand Sterne" />
+		<Slider min={0.06} max={5} step={0.01} bind:value={starSpacing} label="Abstand Sterne" />
 		
 		<Toggle bind:value={monoColor} label="Mono Color" />
 		<hr />
 		<label style="display:block; margin-bottom:6px; font-weight:600;">Presets</label>
 		<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
 			{#each presets as p, i}
-				<button on:click={() => selectPreset(i)} class:selected={selectedPreset === i} style="border:1px solid #ddd; padding:6px; background:white; cursor:pointer;">
+				<button on:click={() => selectPreset(i)} class="preset-button" class:selected={selectedPreset === i}>
 					<div style="display:flex; gap:4px;">
 						{#each p as c}
-							<div style="width:26px; height:20px; background:{c}; border:1px solid #ccc;"></div>
+							<div style="width:26px; height:20px; background:{c}; border-radius:2px;"></div>
 						{/each}
 					</div>
 				</button>
@@ -587,5 +587,25 @@ $: gapColorMap = monoColor ? {
 		font-size: 11px;
 		color: #666;
 		text-align: center;
+	}
+
+	.preset-button {
+		border: 2px solid transparent;
+		padding: 6px;
+		background: transparent;
+		cursor: pointer;
+		border-radius: 4px;
+		transition: all 0.2s;
+	}
+
+	.preset-button:hover {
+		border-color: #91A599;
+		background: rgba(145, 165, 153, 0.1);
+	}
+
+	.preset-button.selected {
+		border-color: #91A599;
+		background: rgba(145, 165, 153, 0.15);
+		box-shadow: 0 0 0 1px #91A599;
 	}
 </style>

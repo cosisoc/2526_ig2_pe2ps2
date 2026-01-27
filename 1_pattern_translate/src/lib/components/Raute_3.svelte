@@ -1,7 +1,7 @@
 <script>
 import Slider from '$lib/ui/Slider.svelte';
 import Toggle from '$lib/ui/Toggle.svelte';
-import EditableColorPalette from '$lib/ui/EditableColorPalette.svelte';
+import RangeSlider from '$lib/ui/RangeSlider.svelte';
 
 // Größe einer Raute
 const a = 120;
@@ -177,6 +177,93 @@ $: gapScale = actualDistance;
 const defaultColors = ['#91A599', '#849179', '#B6CDC7'];
 export let colors = ['#91A599', '#849179', '#B6CDC7'];
 
+// Presets: arrays of three colors
+const presets = [
+	['#A0B5A8', '#849179', '#B6CDC7'],
+	['#F6D6AD', '#F28C66', '#C85A3A'],
+	['#D6EAF8', '#8FBFE0', '#2A6F97'],
+	['#FFE6F0', '#FF9EC3', '#FF5A9E'],
+	['#FFF4D6', '#FFD27A', '#FF9B3B']
+];
+
+let selectedPreset = 0;
+
+// Lightness range and brightness adjustment
+let minLight = 20; // percent
+let maxLight = 80; // percent
+
+function selectPreset(i) {
+	selectedPreset = i;
+	colors = [...presets[i]];
+}
+
+// color helpers (hex <-> rgb <-> hsl)
+function hexToRgb(hex) {
+	hex = hex.replace('#', '');
+	if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+	const num = parseInt(hex, 16);
+	return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+}
+
+function rgbToHex({ r, g, b }) {
+	const two = (n) => n.toString(16).padStart(2, '0');
+	return '#' + two(Math.round(r)).toLowerCase() + two(Math.round(g)).toLowerCase() + two(Math.round(b)).toLowerCase();
+}
+
+function rgbToHsl({ r, g, b }) {
+	r /= 255; g /= 255; b /= 255;
+	const max = Math.max(r, g, b), min = Math.min(r, g, b);
+	let h, s, l = (max + min) / 2;
+	if (max === min) {
+		h = s = 0;
+	} else {
+		const d = max - min;
+		s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+		switch (max) {
+			case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+			case g: h = (b - r) / d + 2; break;
+			case b: h = (r - g) / d + 4; break;
+		}
+		h /= 6;
+	}
+	return { h: h * 360, s: s * 100, l: l * 100 };
+}
+
+function hslToRgb({ h, s, l }) {
+	h /= 360; s /= 100; l /= 100;
+	let r, g, b;
+	if (s === 0) {
+		r = g = b = l;
+	} else {
+		const hue2rgb = (p, q, t) => {
+			if (t < 0) t += 1;
+			if (t > 1) t -= 1;
+			if (t < 1/6) return p + (q - p) * 6 * t;
+			if (t < 1/2) return q;
+			if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+			return p;
+		};
+		const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+		const p = 2 * l - q;
+		r = hue2rgb(p, q, h + 1/3);
+		g = hue2rgb(p, q, h);
+		b = hue2rgb(p, q, h - 1/3);
+	}
+	return { r: r * 255, g: g * 255, b: b * 255 };
+}
+
+// compute displayed colors by remapping each color's lightness into [minLight, effectiveMax]
+// scale maxLight so slider value 100 maps to ~80% (avoid full white)
+$: displayColors = colors.map(hex => {
+	const rgb = hexToRgb(hex);
+	const hsl = rgbToHsl(rgb);
+	const capFactor = 0.8; // slider 100 -> 80
+	const effectiveMax = Math.max(minLight, Math.min(100, maxLight * capFactor));
+	const mappedL = minLight + (hsl.l / 100) * (effectiveMax - minLight);
+	const newRgb = hslToRgb({ h: hsl.h, s: hsl.s, l: mappedL });
+	return rgbToHex(newRgb);
+});
+
 // Vordefinierte Farbpaletten
 const colorPalettes = [
 	{ name: 'Grün Töne', colors: ['#91A599', '#849179', '#B6CDC7'] },
@@ -285,29 +372,29 @@ $: gapCenters = (() => {
 
 // Welche Farbe für welche Raute
 $: colorMap = monoColor ? {
-	0: colors[0],
-	1: colors[0],
-	2: colors[0],
-	3: colors[0],
-	4: colors[0],
-	5: colors[0]
+	0: displayColors[0],
+	1: displayColors[0],
+	2: displayColors[0],
+	3: displayColors[0],
+	4: displayColors[0],
+	5: displayColors[0]
 } : {
-	0: colors[0],
-	1: colors[1],
-	2: colors[2],
-	3: colors[0],
-	4: colors[1],
-	5: colors[2]
+	0: displayColors[0],
+	1: displayColors[1],
+	2: displayColors[2],
+	3: displayColors[0],
+	4: displayColors[1],
+	5: displayColors[2]
 };
 
 $: gapColorMap = monoColor ? {
-	0: colors[0],
-	60: colors[0],
-	120: colors[0]
+	0: displayColors[0],
+	60: displayColors[0],
+	120: displayColors[0]
 } : {
-	0: colors[0],
-	60: colors[1],
-	120: colors[2]
+	0: displayColors[0],
+	60: displayColors[1],
+	120: displayColors[2]
 };
 </script>
 
@@ -378,15 +465,25 @@ $: gapColorMap = monoColor ? {
 </div>
 
 <div class="sidebar-right">
-	<Slider min={0} max={100} bind:value={triangleOpacity} label="Deckkraft 2. Dreieck" />
 	<Slider min={-6} max={1} step={0.01} bind:value={radialDistortion} label="Radial Distortion" />
-	<!-- Neuer Slider: Linienstärke (Default 0.0) -->
-	<Slider min={0} max={4} step={0.1} bind:value={strokeWidth} label="Linienstärke" />
-	<!-- Neuer Slider: Abstand der Sterne (Default 1.0) -->
-	<Slider min={0.5} max={2} step={0.01} bind:value={starSpacing} label="Abstand Sterne" />
-	<Toggle bind:value={monoColor} label="Mono Color" />
 	<hr />
-	<EditableColorPalette bind:colors width={310} swatchSize={35} />
+	<div style="width:310px;">
+		<label style="display:block; margin-bottom:6px; font-weight:600;">Presets</label>
+		<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+			{#each presets as p, i}
+				<button on:click={() => selectPreset(i)} class="preset-button" class:selected={selectedPreset === i}>
+					<div style="display:flex; gap:4px;">
+						{#each p as c}
+							<div style="width:26px; height:20px; background:{c}; border-radius:2px;"></div>
+						{/each}
+					</div>
+				</button>
+			{/each}
+		</div>
+
+		<label style="display:block; margin-bottom:6px; font-weight:600;">Lightness Range (%)</label>
+		<RangeSlider min={0} max={100} step={1} bind:value1={minLight} bind:value2={maxLight} label="Range" />
+	</div>
 	
 </div>
 
@@ -578,5 +675,25 @@ $: gapColorMap = monoColor ? {
 		font-size: 11px;
 		color: #666;
 		text-align: center;
+	}
+
+	.preset-button {
+		border: 2px solid transparent;
+		padding: 6px;
+		background: transparent;
+		cursor: pointer;
+		border-radius: 4px;
+		transition: all 0.2s;
+	}
+
+	.preset-button:hover {
+		border-color: #91A599;
+		background: rgba(145, 165, 153, 0.1);
+	}
+
+	.preset-button.selected {
+		border-color: #91A599;
+		background: rgba(145, 165, 153, 0.15);
+		box-shadow: 0 0 0 1px #91A599;
 	}
 </style>

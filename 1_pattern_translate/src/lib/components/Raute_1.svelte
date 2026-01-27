@@ -93,7 +93,7 @@ const presets = [
 	['#FFF4D6', '#FFD27A', '#FF9B3B']
 ];
 
-let selectedPreset = -1;
+let selectedPreset = 0;
 
 // Lightness range and brightness adjustment
 let minLight = 20; // percent
@@ -411,10 +411,10 @@ function chooseInnerColor(star, i) {
 			<label style="display:block; margin-bottom:6px; font-weight:600;">Presets</label>
 			<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
 				{#each presets as p, i}
-					<button on:click={() => selectPreset(i)} class:selected={selectedPreset === i} style="border:1px solid #ddd; padding:6px; background:white; cursor:pointer;">
+					<button on:click={() => selectPreset(i)} class="preset-button" class:selected={selectedPreset === i}>
 						<div style="display:flex; gap:4px;">
 							{#each p as c}
-								<div style="width:26px; height:20px; background:{c}; border:1px solid #ccc;"></div>
+								<div style="width:26px; height:20px; background:{c}; border-radius:2px;"></div>
 							{/each}
 						</div>
 					</button>
@@ -443,5 +443,25 @@ function chooseInnerColor(star, i) {
 		height: 100%;
 		background: white;
 		border: 1px solid #ddd;
+	}
+
+	.preset-button {
+		border: 2px solid transparent;
+		padding: 6px;
+		background: transparent;
+		cursor: pointer;
+		border-radius: 4px;
+		transition: all 0.2s;
+	}
+
+	.preset-button:hover {
+		border-color: #91A599;
+		background: rgba(145, 165, 153, 0.1);
+	}
+
+	.preset-button.selected {
+		border-color: #91A599;
+		background: rgba(145, 165, 153, 0.15);
+		box-shadow: 0 0 0 1px #91A599;
 	}
 </style>
