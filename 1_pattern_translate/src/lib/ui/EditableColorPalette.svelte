@@ -22,7 +22,7 @@
         {/each}
     </div>
     <div class="color-picker-container">
-        <ColorPickerHSV bind:color={colors[selectedColorIndex]} width={width} height={height}/>
+        <ColorPickerHSV bind:color={colors[selectedColorIndex]} width={width} height={height} showSV={false}/>
     </div>
 </div>
 

@@ -1,4 +1,8 @@
 <script>
+import Slider from '$lib/ui/Slider.svelte';
+import Toggle from '$lib/ui/Toggle.svelte';
+import EditableColorPalette from '$lib/ui/EditableColorPalette.svelte';
+
 // Größe einer Raute
 const a = 120;
 const sqrt3 = Math.sqrt(3);
@@ -128,6 +132,7 @@ export let rotation = 0;
 export let showGaps = true;
 export let monoColor = false;
 export let radialDistortion = 0.0; // Verzerrung: 0=normal, >0=Sterne breiter, <0=Gaps breiter
+export let strokeWidth = 0.2;
 
 // Verzerrung NUR in X-Richtung (Breite), Y bleibt konstant
 // Bei radialDistortion > 0: Stern-Rauten werden breiter, Gap-Rauten schmaler
@@ -318,14 +323,14 @@ $: gapColorMap = monoColor ? {
 							points={pointsToStr([rhombus[0], rhombus[3], rhombus[2]])} 
 							fill={colorMap[i]} 
 							stroke="#000" 
-							stroke-width="0" 
+								stroke-width={strokeWidth} 
 						/>
 						<polygon 
 							points={pointsToStr([rhombus[0], rhombus[1], rhombus[2]])} 
 							fill={colorMap[i]} 
 							fill-opacity={triangleOpacity / 100} 
 							stroke="#000" 
-							stroke-width="0" 
+								stroke-width={strokeWidth} 
 						/>
 						<line 
 							x1={rhombus[0][0]} 
@@ -333,27 +338,26 @@ $: gapColorMap = monoColor ? {
 							x2={rhombus[2][0]} 
 							y2={rhombus[2][1]} 
 							stroke="#000" 
-							stroke-width="0" 
+								stroke-width={strokeWidth} 
 						/>
 					{/each}
 				</g>
 			{/each}
 
-			{#if showGaps}
 			{#each gapCenters as gap}
 				<g transform="translate({gap.x} {gap.y}) rotate({rotation + gap.rotation})">
 					<polygon 
 						points={pointsToStr([distortedGapRhombus[0], distortedGapRhombus[3], distortedGapRhombus[2]])} 
 						fill={gapColorMap[gap.rotation] || colors[1]} 
 						stroke="#000" 
-						stroke-width="0" 
+						stroke-width={strokeWidth} 
 					/>
 					<polygon 
 						points={pointsToStr([distortedGapRhombus[0], distortedGapRhombus[1], distortedGapRhombus[2]])} 
 						fill={gapColorMap[gap.rotation] || colors[1]} 
 						fill-opacity={triangleOpacity / 100} 
 						stroke="#000" 
-						stroke-width="0" 
+						stroke-width={strokeWidth} 
 					/>
 					<line 
 						x1={distortedGapRhombus[0][0]} 
@@ -361,22 +365,28 @@ $: gapColorMap = monoColor ? {
 						x2={distortedGapRhombus[2][0]} 
 						y2={distortedGapRhombus[2][1]} 
 						stroke="#000" 
-						stroke-width="0" 
+						stroke-width={strokeWidth} 
 					/>
 				</g>
 			{/each}
-			{/if}
 			{/key}
 		</svg>
 		</div>
 
-	<!-- controls moved to parent sidebar -->
+	</div>
+
+	<div class="sidebar-right">
+		<Slider min={0} max={100} bind:value={triangleOpacity} label="Deckkraft 2. Dreieck" />
+		<Slider min={-6} max={1} step={0.01} bind:value={radialDistortion} label="Radial Distortion" />
+		<Slider min={0} max={4} step={0.1} bind:value={strokeWidth} label="Linienstärke" />
+		<Toggle bind:value={monoColor} label="Mono Color" />
+		<hr />
+		<EditableColorPalette bind:colors width={310} swatchSize={35} />
 	</div>
 
 	<style>
 	.svg-container {
-		width: 100%;
-		height: 100%;
+		flex: 1;
 		display: flex;
 		align-items: center;
 		justify-content: center;

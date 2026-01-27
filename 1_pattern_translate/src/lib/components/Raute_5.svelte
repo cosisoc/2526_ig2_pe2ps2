@@ -1,4 +1,8 @@
 <script>
+import Slider from '$lib/ui/Slider.svelte';
+import Toggle from '$lib/ui/Toggle.svelte';
+import { onMount } from 'svelte';
+
 // Größe einer Raute
 const a = 120;
 const sqrt3 = Math.sqrt(3);
@@ -39,11 +43,68 @@ function buildDistortedRhombi(distortionScale) {
 		let rotatedRhombus = [];
 		for (let j = 0; j < baseRhombus.length; j++) {
 			const point = baseRhombus[j];
-			// Erst verzerren (in lokaler X-Richtung der Raute)
-			const distortedX = point[0] * distortionScale;
-			const distortedY = point[1]; // Y bleibt gleich
+			// Berechne, wie weit der Punkt entlang der Raute von innen (0) nach außen (1) liegt
+			// axis von point0 (y=0) nach point2 (y=-a*sqrt3) => t = -y / (a*sqrt3)
+			let t = -point[1] / (a * sqrt3);
+			if (t < 0) t = 0; if (t > 1) t = 1;
+			// Wir möchten Verzerrung nur auf die innere Hälfte (t in [0,0.5]) anwenden.
+			// Interpolationsfaktor: distortionScale at center (t=0) -> 1 at midpoint (t=0.5)
+			// Apply distortion only to the outer half (t in (0.5,1]).
+			// Inner half (t <= 0.5) remains unchanged to avoid creating gaps.
+			let localFactor = 1;
+			let distortedX;
+			// make sure distortedY is declared before any assignment
+			let distortedY = point[1];
+			// Two modes:
+			// - expansion (distortionScale >= 1): apply effect starting at effectStart (affects side + outer)
+			// - shrinking (distortionScale < 1): apply effect only to outer half (t>=0.5)
+			const effectStart = 0.25;
+			let u = 0;
+			if (distortionScale >= 1) {
+				if (t >= effectStart) {
+					u = Math.min(1, (t - effectStart) / (1 - effectStart)); // 0..1 across effect zone
+					// For expansion: instead of widening X, compress the Y (raise the middle)
+					// so the rhombi flatten and become hexagon-like.
+					// Safety: cap compression to avoid inversion or excessive squashing.
+					const yCompressFactor = 0.6; // 0..1, higher -> stronger compression
+					const maxCompressAmount = 0.85; // do not compress more than this fraction
+					const minYScale = 0.05; // never scale Y below this to avoid inversion
+					let compressAmount = (distortionScale - 1) * u * yCompressFactor;
+					if (!isFinite(compressAmount) || compressAmount < 0) compressAmount = 0;
+					compressAmount = Math.min(maxCompressAmount, compressAmount);
+					distortedX = point[0];
+					distortedY = point[1] * Math.max(minYScale, 1 - compressAmount);
+				} else {
+					distortedX = point[0];
+					distortedY = point[1];
+				}
+			} else {
+				// shrinking: only outer half (t in [0.5,1]) is thinned
+				const outerStart = 0.5;
+				if (t >= outerStart) {
+					u = Math.min(1, (t - outerStart) / (1 - outerStart));
+					localFactor = 1 + (distortionScale - 1) * u;
+					distortedX = point[0] * localFactor;
+				} else {
+					distortedX = point[0];
+				}
+			}
 			// Dann rotieren
-			const rotated = rotatePoint(distortedX, distortedY, i * 60);
+			let rotated = rotatePoint(distortedX, distortedY, i * 60);
+
+			// Nach der Rotation: wenn der Punkt zur äußeren Zone gehört (u>0), schieben
+			// wir ihn stufenweise auf den Hexagon-Radius hinaus, damit die Rauten
+			// bei voller Verzerrung ein Sechseck bilden (keine Lücken mehr).
+			// Only apply outward adjustment when we are expanding (distortionScale > 1)
+			if (u > 0 && distortionScale > 1) {
+				const hexRadius = a * sqrt3; // Zielradius für Sechseck-Kante
+				const dist = Math.hypot(rotated[0], rotated[1]);
+				if (dist > 1e-6) {
+					const targetScale = hexRadius / dist;
+					const outwardScale = 1 + u * (targetScale - 1);
+					rotated = [rotated[0] * outwardScale, rotated[1] * outwardScale];
+				}
+			}
 			rotatedRhombus.push(rotated);
 		}
 		distorted.push(rotatedRhombus);
@@ -67,6 +128,8 @@ export let steps = 12;
 export let gapSize = 0.0;
 export let triangleOpacity = 50;
 export let starSpacing = 1.0; // Default auf 1.0 für Raute 3
+export let strokeWidth = 0.2;
+export let scale = 1.0;
 export let rotation = 0;
 export let showGaps = true;
 export let monoColor = false;
@@ -82,6 +145,47 @@ export let selectedColor = '#ff0000';
 let localTriColors = {};
 // local gap color defaults (per local gap position: rotation + triIndex)
 let localGapColors = {};
+
+// Farbmuster-Presets
+export let colorPatternIndex = 0;
+const colorPatterns = [
+	{
+		name: 'Pattern 1',
+		localTriColors: {'0-0':'#ffffff','1-0':'#ffffff','2-0':'#ffffff','3-0':'#ffffff','4-0':'#ffffff','5-0':'#ffffff','4-1':'#ffffff','5-1':'#ffffff','0-1':'#ffffff','3-1':'#ffffff','2-1':'#ffffff','1-1':'#ffffff'},
+		localGapColors: {'60-1':'#8f8f8f','120-0':'#8e8e8e','0-0':'#454545','0-1':'#535353'}
+	},
+	{
+		name: 'Pattern 2 - Rot/Blau',
+		localTriColors: {'0-0':'#ffffff','1-0':'#ffffff','2-0':'#ffffff','3-0':'#ffffff','4-0':'#ffffff','5-0':'#ffffff','4-1':'#ffffff','5-1':'#ffffff','0-1':'#ffffff','3-1':'#ffffff','2-1':'#ffffff','1-1':'#ffffff'},
+		localGapColors: {'60-1':'#8f8f8f','120-0':'#8e8e8e','0-0':'#454545','0-1':'#535353'}
+	},
+	{
+		name: 'Pattern 3 - Grautöne',
+		localTriColors: {'0-0': '#222222', '0-1': '#444444', '1-0': '#666666', '1-1': '#888888', '2-0': '#aaaaaa', '2-1': '#cccccc', '3-0': '#222222', '3-1': '#444444', '4-0': '#666666', '4-1': '#888888', '5-0': '#aaaaaa', '5-1': '#cccccc'},
+		localGapColors: {'0-0': '#eeeeee', '0-1': '#dddddd', '60-0': '#eeeeee', '60-1': '#dddddd', '120-0': '#eeeeee', '120-1': '#dddddd'}
+	},
+	{
+		name: 'Pattern 4 - Pastell',
+		localTriColors: {'0-0': '#ffccdd', '0-1': '#ccddff', '1-0': '#ffffcc', '1-1': '#ddffcc', '2-0': '#ffddcc', '2-1': '#ccffdd', '3-0': '#ffccdd', '3-1': '#ccddff', '4-0': '#ffffcc', '4-1': '#ddffcc', '5-0': '#ffddcc', '5-1': '#ccffdd'},
+		localGapColors: {'0-0': '#f0f0f0', '0-1': '#e8e8e8', '60-0': '#f0f0f0', '60-1': '#e8e8e8', '120-0': '#f0f0f0', '120-1': '#e8e8e8'}
+	},
+	{
+		name: 'Pattern 5 - Schwarz/Weiß',
+		localTriColors: {'0-0': '#ffffff', '0-1': '#ffffff', '1-0': '#ffffff', '1-1': '#ffffff', '2-0': '#ffffff', '2-1': '#ffffff', '3-0': '#ffffff', '3-1': '#ffffff', '4-0': '#000000', '4-1': '#000000', '5-0': '#000000', '5-1': '#ffffff'},
+		localGapColors: {'0-0': '#ffffff', '0-1': '#ffffff', '60-0': '#000000', '60-1': '#ffffff', '120-0': '#000000', '120-1': '#ffffff'}
+	}
+,
+	{
+		name: 'Pattern 6 - Neues Debug-Muster',
+		localTriColors: {'5-1':'#000000','4-0':'#000000','2-1':'#000000','1-1':'#000000','1-0':'#000000','5-0':'#000000','3-0':'#c89b9b','3-1':'#ca9b9b','0-1':'#8b6262','0-0':'#8c6363'},
+		localGapColors: {'120-0':'#000000','60-0':'#000000','60-1':'#ca4c4c','120-1':'#ca4c4c','0-1':'#ca9b9b','0-0':'#c99b9b'}
+	},
+	{
+		name: 'Pattern 7 - From Raute4',
+		localTriColors: {'5-1':'#000000','4-0':'#000000','2-1':'#000000','1-1':'#000000','1-0':'#000000','5-0':'#000000','3-0':'#c89b9b','3-1':'#ca9b9b','0-1':'#8b6262','0-0':'#8c6363'},
+		localGapColors: {'120-0':'#000000','60-0':'#000000','60-1':'#ca4c4c','120-1':'#ca4c4c','0-1':'#ca9b9b','0-0':'#c99b9b'}
+	}
+];
 
 // Verzerrung NUR in X-Richtung (Breite), Y bleibt konstant
 // Bei radialDistortion > 0: Stern-Rauten werden breiter, Gap-Rauten schmaler
@@ -173,6 +277,24 @@ export function resetToDefaults() {
 	radialDistortion = 0.0;
 	colors = ['#91A599', '#849179', '#B6CDC7'];
 }
+
+export function applyColorPattern(index) {
+	if (index >= 0 && index < colorPatterns.length) {
+		const pattern = colorPatterns[index];
+		// If pattern requests import from Raute_4 and Raute_4 provided a snapshot, prefer that
+		if (pattern._importFromRaute4 && typeof window !== 'undefined' && window.lastRaute4Colors) {
+			const src = window.lastRaute4Colors;
+			localTriColors = { ...(src.localTriColors || {}), ...(pattern.localTriColors || {}) };
+			localGapColors = { ...(src.localGapColors || {}), ...(pattern.localGapColors || {}) };
+		} else {
+			localTriColors = { ...pattern.localTriColors };
+			localGapColors = { ...pattern.localGapColors };
+		}
+	}
+}
+
+// Reactive: Wende das Farbmuster an, wenn der Index sich ändert
+$: applyColorPattern(colorPatternIndex);
 
 // Sternpositionen berechnen - nutze STATISCHE Metriken (keine Verzerrung der Positionen)
 $: moduleCenters = (() => {
@@ -337,6 +459,24 @@ $: gapColorMap = monoColor ? {
 	60: colors[1],
 	120: colors[2]
 };
+
+onMount(() => {
+	window.debugColorsRaute5 = () => {
+		const payload = {
+			triColors: triColors,
+			localTriColors: localTriColors,
+			gapTriColors: gapTriColors,
+			localGapColors: localGapColors
+		};
+		console.log('triColors:', payload.triColors);
+		console.log('localTriColors:', payload.localTriColors);
+		console.log('gapTriColors:', payload.gapTriColors);
+		console.log('localGapColors:', payload.localGapColors);
+		// make it easy to copy/export from the console
+		window.lastRaute5Colors = payload;
+		return payload;
+	};
+});
 </script>
 
 <div class="svg-container">
@@ -345,7 +485,7 @@ $: gapColorMap = monoColor ? {
 		<svg viewBox="-900 -1000 1800 2000" class="svg-canvas" shape-rendering="crispEdges" style="max-width: 100%; max-height: 100%; aspect-ratio: 0.9;">
 			{#key [colors, radialDistortion]}
 			{#each moduleCenters as star}
-				<g transform="translate({star.x} {star.y}) rotate({rotation})">
+				<g transform="translate({star.x} {star.y}) rotate({rotation}) scale({starScale})">
 					{#each distortedStarRhombi as rhombus, i}
 						<polygon 
 							points={pointsToStr([rhombus[0], rhombus[3], rhombus[2]])} 
@@ -407,13 +547,29 @@ $: gapColorMap = monoColor ? {
 		</svg>
 		</div>
 
-	<!-- controls moved to parent sidebar -->
+	</div>
+
+	<div class="sidebar-right">
+		<Slider min={0} max={colorPatterns.length - 1} step={1} bind:value={colorPatternIndex} label="Farbmuster ({colorPatterns[colorPatternIndex].name})" />
+			<Slider min={0} max={100} bind:value={triangleOpacity} label="Deckkraft 2. Dreieck" />
+			<Slider min={-6} max={1} step={0.01} bind:value={radialDistortion} label="Radial Distortion" />
+		<Slider min={0.2} max={3.5} step={0.01} bind:value={starSpacing} label="Abstand Sterne" />
+		<Slider min={0} max={4} step={0.1} bind:value={strokeWidth} label="Linienstärke" />
+		<Slider min={0.3} max={3} step={0.05} bind:value={scale} label="Zoom" />
+		<Toggle bind:value={showGaps} label="Lücken anzeigen" />
+		{#if selected}
+			<hr />
+			<div class="label">Ausgewähltes Dreieck:</div>
+			<input type="color" bind:value={selectedColor} on:change={() => applySelectedColor()} style="width: 100%; height: 40px; margin-bottom: 10px;" />
+		{:else}
+			<hr />
+			<div class="label" style="color: #999; text-align: center;">Klicke ein Dreieck im SVG</div>
+		{/if}
 	</div>
 
 	<style>
 	.svg-container {
-		width: 100%;
-		height: 100%;
+		flex: 1;
 		display: flex;
 		align-items: center;
 		justify-content: center;

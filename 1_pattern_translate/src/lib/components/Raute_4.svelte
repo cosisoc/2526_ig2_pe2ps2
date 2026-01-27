@@ -1,4 +1,6 @@
 <script>
+import Slider from '$lib/ui/Slider.svelte';
+import Toggle from '$lib/ui/Toggle.svelte';
 import { onMount } from 'svelte';
 
 // Export props so parent can control them
@@ -7,8 +9,10 @@ export let steps = 12;
 export let triangleOpacity = 50;
 export let starSpacing = 0.8;
 export let strokeWidth = 0.2;
+export let showGaps = true;
 // gaps are always shown
 export let scale = 1.0;
+export let radialDistortion = 0.0;
 export let triColors = {};
 export let gapTriColors = {};
 export let selected = null;
@@ -16,6 +20,8 @@ export let selectedColor = '#ff0000';
 
 // per-local-triangle quick mapping to avoid updating every module instance
 let localTriColors = {};
+// per-local-gap mapping so gap colors can be applied globally by (rotation, triIndex)
+let localGapColors = {};
 
 // Basis-Raute (kann durch Ziehen verändert werden)
 let a = 120;
@@ -57,6 +63,32 @@ function buildRhombiFromBase(base) {
 
 const rhombi = buildRhombiFromBase(baseRhombus);
 
+// Distortion helpers (similar to Raute_3/5)
+$: starDistortionScale = 1.0 + radialDistortion * 0.3;
+$: gapDistortionScale = 1.0 - radialDistortion * 0.3;
+
+function buildDistortedRhombi(distortionScale) {
+  let distorted = [];
+  for (let i = 0; i < 6; i++) {
+    let rotatedRhombus = [];
+    for (let j = 0; j < baseRhombus.length; j++) {
+      const point = baseRhombus[j];
+      const distortedX = point[0] * distortionScale;
+      const distortedY = point[1];
+      const rotated = rotatePoint(distortedX, distortedY, i * 60);
+      rotatedRhombus.push([rotated.x, rotated.y]);
+    }
+    distorted.push(rotatedRhombus);
+  }
+  return distorted;
+}
+
+$: distortedStarRhombi = buildDistortedRhombi(starDistortionScale);
+$: distortedGapRhombus = baseRhombus.map(p => [p[0] * gapDistortionScale, p[1]]);
+
+$: triPointsStr0 = `${distortedGapRhombus[0][0]},${distortedGapRhombus[0][1]} ${distortedGapRhombus[3][0]},${distortedGapRhombus[3][1]} ${distortedGapRhombus[2][0]},${distortedGapRhombus[2][1]}`;
+$: triPointsStr1 = `${distortedGapRhombus[0][0]},${distortedGapRhombus[0][1]} ${distortedGapRhombus[1][0]},${distortedGapRhombus[1][1]} ${distortedGapRhombus[2][0]},${distortedGapRhombus[2][1]}`;
+
 // Pattern settings
 let gapSize = 0.0;
 let rotation = 0;
@@ -68,11 +100,12 @@ function getGapKey(r, c, rot, t) {
 
 function ensureGapColor(r, c, rot, t) {
   const key = getGapKey(r, c, rot, t);
-  if (!gapTriColors[key]) {
-    const palette = { '0': '#e6e6e6', '60': '#d9d9d9', '120': '#cfcfcf' };
-    gapTriColors[key] = palette[String(rot)] || '#e6e6e6';
-  }
-  return gapTriColors[key];
+  // prefer a per-local mapping for this gap rotation/triangle (global change)
+  const localKey = `${rot}-${t}`;
+  if (localGapColors[localKey]) return localGapColors[localKey];
+  // fallback palette per rotation (do NOT write back into gapTriColors here)
+  const palette = { '0': '#e6e6e6', '60': '#d9d9d9', '120': '#cfcfcf' };
+  return palette[String(rot)] || '#e6e6e6';
 }
 
 function defaultColorFor(rhombusIndex, triIndex) {
@@ -100,7 +133,7 @@ function selectTriangle(r, c, i, t) {
 function selectGapTriangle(r, c, rot, t) {
   const key = getGapKey(r, c, rot, t);
   selected = { key, row: r, col: c, rotation: rot, triIndex: t, isGap: true };
-  selectedColor = gapTriColors[key] || ensureGapColor(r, c, rot, t);
+  selectedColor = gapTriColors[key] || localGapColors[`${rot}-${t}`] || ensureGapColor(r, c, rot, t);
 }
 
 // shape editor removed
@@ -175,8 +208,8 @@ $: gapCenters = computeLimitedGapCenters(moduleCenters);
 // Pre-calculate rhombus triangle points to avoid recalculation
 const triPoints0 = [ {x: baseRhombus[0][0], y: baseRhombus[0][1]}, {x: baseRhombus[3][0], y: baseRhombus[3][1]}, {x: baseRhombus[2][0], y: baseRhombus[2][1]} ];
 const triPoints1 = [ {x: baseRhombus[0][0], y: baseRhombus[0][1]}, {x: baseRhombus[1][0], y: baseRhombus[1][1]}, {x: baseRhombus[2][0], y: baseRhombus[2][1]} ];
-const triPointsStr0 = pointsToStr(triPoints0);
-const triPointsStr1 = pointsToStr(triPoints1);
+let triPointsStr0 = pointsToStr(triPoints0);
+let triPointsStr1 = pointsToStr(triPoints1);
 
 // build rhombus at position (simplified)
 function getRhombusPoints(cx, cy, rotDeg) {
@@ -190,6 +223,21 @@ function getRhombusPoints(cx, cy, rotDeg) {
 
 onMount(() => {
   // Colors are generated on-demand via defaultColorFor fallback
+  // Debug-Funktion global verfügbar machen (returns a snapshot)
+  window.debugColors = () => {
+    const payload = {
+      triColors: triColors,
+      localTriColors: localTriColors,
+      gapTriColors: gapTriColors,
+      localGapColors: localGapColors
+    };
+    console.log('triColors:', payload.triColors);
+    console.log('localTriColors:', payload.localTriColors);
+    console.log('gapTriColors:', payload.gapTriColors);
+    console.log('localGapColors:', payload.localGapColors);
+    window.lastRaute4Colors = payload;
+    return payload;
+  };
 });
 
 // Export these functions so parent can call them
@@ -214,8 +262,13 @@ export function resetColors() {
 export function applySelectedColor() {
   if (!selected) return;
   if (selected.isGap) {
-    gapTriColors[selected.key] = selectedColor;
-    gapTriColors = {...gapTriColors};
+    // Apply color globally for this gap rotation and triangle index
+    setColorForLocalGap(selected.rotation, selected.triIndex, selectedColor);
+    // remove any per-gap override for the currently selected gap so the global color shows
+    if (gapTriColors[selected.key]) {
+      delete gapTriColors[selected.key];
+      gapTriColors = { ...gapTriColors };
+    }
   } else {
     // Apply the color globally to the local triangle position (all modules)
     setColorForLocalTriangle(selected.rhombusIndex, selected.triIndex, selectedColor);
@@ -232,6 +285,15 @@ export function setColorForLocalTriangle(i, t, color) {
   localTriColors = { ...localTriColors };
 }
 
+// Apply a color to a specific local gap position (rotation, triangle index)
+// rot: rotation (0,60,120), t: triangle index (0 or 1)
+// This will set the color for every gap with the same rotation and triangle index across the grid
+export function setColorForLocalGap(rot, t, color) {
+  const key = `${rot}-${t}`;
+  localGapColors[key] = color;
+  localGapColors = { ...localGapColors };
+}
+
 // Gap functions removed - gaps are always shown
 </script>
 
@@ -240,7 +302,7 @@ export function setColorForLocalTriangle(i, t, color) {
   <g transform="scale({scale})">
   {#each moduleCenters as center (center.row + '-' + center.col)}
     <g transform="translate({center.x} {center.y}) rotate({rotation}) scale({starScale})">
-      {#each rhombi as rh, i}
+      {#each distortedStarRhombi as rh, i}
         <polygon
           points={`${rh[0][0]},${rh[0][1]} ${rh[3][0]},${rh[3][1]} ${rh[2][0]},${rh[2][1]}`}
           fill={triColors[getTriKey(center.row, center.col, i, 0)] || localTriColors[`${i}-0`] || defaultColorFor(i, 0)}
@@ -265,14 +327,14 @@ export function setColorForLocalTriangle(i, t, color) {
         <!-- triangle A: points 0,3,2 -->
         <polygon
           points={triPointsStr0}
-          fill={gapTriColors[getGapKey(gap.row, gap.col, gap.rotation, 0)] || ensureGapColor(gap.row, gap.col, gap.rotation, 0)}
+          fill={localGapColors[`${gap.rotation}-0`] || gapTriColors[getGapKey(gap.row, gap.col, gap.rotation, 0)] || ensureGapColor(gap.row, gap.col, gap.rotation, 0)}
           stroke="#000" stroke-width={strokeWidth}
           on:click={() => selectGapTriangle(gap.row, gap.col, gap.rotation, 0)}
         />
         <!-- triangle B: points 0,1,2 -->
         <polygon
           points={triPointsStr1}
-          fill={gapTriColors[getGapKey(gap.row, gap.col, gap.rotation, 1)] || ensureGapColor(gap.row, gap.col, gap.rotation, 1)}
+          fill={localGapColors[`${gap.rotation}-1`] || gapTriColors[getGapKey(gap.row, gap.col, gap.rotation, 1)] || ensureGapColor(gap.row, gap.col, gap.rotation, 1)}
           fill-opacity={triangleOpacity / 100}
           stroke="#000" stroke-width={strokeWidth}
           on:click={() => selectGapTriangle(gap.row, gap.col, gap.rotation, 1)}
@@ -281,6 +343,22 @@ export function setColorForLocalTriangle(i, t, color) {
     {/each}
   </g>
   </svg>
+</div>
+
+<div class="sidebar-right">
+  <Slider min={0} max={100} bind:value={triangleOpacity} label="Deckkraft 2. Dreieck" />
+  <Slider min={0.2} max={3.5} step={0.01} bind:value={starSpacing} label="Abstand Sterne" />
+  <Slider min={0} max={4} step={0.1} bind:value={strokeWidth} label="Linienstärke" />
+  <Slider min={0.3} max={3} step={0.05} bind:value={scale} label="Zoom" />
+  <Toggle bind:value={showGaps} label="Lücken anzeigen" />
+  {#if selected}
+    <hr />
+    <div class="label">Ausgewähltes Dreieck:</div>
+    <input type="color" bind:value={selectedColor} on:input={() => applySelectedColor()} style="width: 100%; height: 40px; margin-bottom: 10px;" />
+  {:else}
+    <hr />
+    <div class="label" style="color: #999; text-align: center;">Klicke ein Dreieck im SVG</div>
+  {/if}
 </div>
 
 <style>
@@ -319,7 +397,7 @@ export function setColorForLocalTriangle(i, t, color) {
   }
 
   .svg-container-raute4 {
-    width: 100%;
+    flex: 1;
     height: 100%;
     display: flex;
     align-items: center;

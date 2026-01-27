@@ -2,16 +2,29 @@
 	import { formatHex } from 'culori';
 	import DraggableSvgNode from './DraggableSvgNode.svelte';
 
-	let { hsvValues = $bindable(), width = 200, height = 14, margin = 6 } = $props();
+	let { hsvValues = $bindable(), width = 200, height = 14, margin = 6, onchangeColor = null } = $props();
 
 	let minH = 0;
 	let maxH = 360;
 
-	let dragAreaElement = $state(null);
-	let thumbX = $derived((hsvValues[0] / maxH) * (width - 2) + 1);
+	 let dragAreaElement = $state(null);
+	 // thumbX must be writable so DraggableSvgNode can bind to it.
+	 let thumbX = (hsvValues[0] / maxH) * (width - 2) + 1;
+
+	 // keep thumbX in sync when hsvValues[0] changes externally
+	 $effect(() => {
+		 thumbX = (hsvValues[0] / maxH) * (width - 2) + 1;
+	 });
 
 	function updateValues() {
-		hsvValues[0] = ((thumbX - 1) * maxH) / (width - 2);
+		const newH = ((thumbX - 1) * maxH) / (width - 2);
+		const s = hsvValues[1] ?? 1;
+		const v = hsvValues[2] ?? 1;
+		hsvValues = [newH, s, v];
+		try { console.log('SliderH updateValues -> hsvValues', hsvValues); } catch (err) {}
+		if (onchangeColor) {
+			try { onchangeColor(hsvValues); } catch (err) {}
+		}
 	}
 
 	let color = $derived(

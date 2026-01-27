@@ -7,9 +7,11 @@
     color = $bindable(),
     width = 200,
     height,
+    showSV = true,
   } = $props();
 
   height = height || width;
+  let containerHeight = showSV ? height + 20 : 40;
 
   const toHSV = converter("okhsv");
   const toRGB = converter("rgb");
@@ -124,12 +126,14 @@
   }
 </script>
 
-<div
+  <div
   onwheel={mouseWheelHandler}
   class="container"
-  style="width: {width}px; height: {height+20}px;"
+  style="width: {width}px; height: {containerHeight}px;"
 >
-  <SliderSV bind:hsvValues {width} height={height} />
+  {#if showSV}
+    <SliderSV bind:hsvValues {width} height={height} />
+  {/if}
   <SliderH bind:hsvValues {width} />
 </div>
 
