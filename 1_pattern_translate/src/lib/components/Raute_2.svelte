@@ -84,8 +84,8 @@ const defaultColors = ['#6B8A5F', '#2E5F3A', '#D8F0E2'];
 export let colors = ['#6B8A5F', '#2E5F3A', '#D8F0E2'];
 
 // Lightness range
-let minLight = 20;
-let maxLight = 80;
+let minLight = 0;
+let maxLight = 100;
 
 // color helpers (hex <-> rgb <-> hsl)
 function hexToRgb(hex) {
@@ -175,8 +175,7 @@ const presets = [
 	['#6B8A5F', '#91A599', '#D6EDE0'], // higher-contrast greens (adjusted)
 	['#F6D6AD', '#F28C66', '#C85A3A'],
 	['#1E3A8A', '#3B82F6', '#93C5FD'], // Ocean / blue palette
-	['#FFE6F0', '#FF9EC3', '#FF5A9E'],
-	['#FFF4D6', '#FFD27A', '#FF9B3B']
+	['#FFE6F0', '#FF9EC3', '#FF5A9E']
 ];
 
 let selectedPreset = 2; // default to blue preset
@@ -438,7 +437,7 @@ $: backgroundColor = computeBackgroundFromColors(colors, displayColors);
 
 	<div class="sidebar-right">
 		<Slider min={0} max={100} bind:value={triangleOpacity} label="Deckkraft 2. Dreieck" />
-		<Slider min={0} max={4} step={0.1} bind:value={strokeWidth} label="Linienstärke" />
+		
 		<Slider min={0.06} max={5} step={0.01} bind:value={starSpacing} label="Abstand Sterne" />
 		
 		

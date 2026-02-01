@@ -150,39 +150,20 @@ const colorPatterns = [
 	{
 		name: 'Pattern 1 - Imported',
 		triColors: {},
-		// apply to whole pattern via local mappings
-		localTriColors: {
-			'0-0': '#c9593a', '0-1': '#c9593a',
-			'1-0': '#c9593a', '1-1': '#c9593a',
-			'2-0': '#c9593a', '2-1': '#c9593a',
-			'3-0': '#c9593a', '3-1': '#c9593a',
-			'4-0': '#c9593a', '4-1': '#c9593a',
-			'5-0': '#c9593a', '5-1': '#c9593a'
-		},
-		localGapColors: {
-			'0-0': '#c9593a', '0-1': '#c9593a',
-			'60-0': '#ffded8', '60-1': '#ffdfd7',
-			'120-0': '#ffded8', '120-1': '#ffdfd7'
-		},
-		gapTriColors: {}
-	},
-	{
-		name: 'Pattern 3 - Pastel Terra Variant',
-		triColors: {},
 		// localTriColors apply per-rhombus index (i) and triangle (t) across all modules
 		localTriColors: {
-			'0-0': '#c9593a', '0-1': '#b65035',
-			'1-0': '#ffded8', '1-1': '#b95236',
-			'2-0': '#ba5236', '2-1': '#ffded8',
-			'3-0': '#b65035', '3-1': '#b65135',
-			'4-0': '#b65035', '4-1': '#c9593a',
-			'5-0': '#c9593a', '5-1': '#c9593a'
+			'0-0': '#ffdfd7', '0-1': '#ffdfd7',
+			'1-0': '#ffdfd7', '1-1': '#ffdfd7',
+			'2-0': '#ffdfd7', '2-1': '#ffdfd7',
+			'3-0': '#ffdfd7', '3-1': '#ffdfd7',
+			'4-0': '#c9593a', '4-1': '#c9593a',
+			'5-0': '#c9593a', '5-1': '#ffdfd7'
 		},
 		// gaps: rotation-based mapping (rot - t)
 		localGapColors: {
-			'0-0': '#c9593a', '0-1': '#c9593a',
-			'60-0': '#ffded8', '60-1': '#ffdfd7',
-			'120-0': '#ffded8', '120-1': '#ffdfd7'
+			'0-0': '#ffdfd7', '0-1': '#ffdfd7',
+			'60-0': '#c9593a', '60-1': '#ffdfd7',
+			'120-0': '#c9593a', '120-1': '#ffdfd7'
 		}
 	},
 	{
@@ -190,18 +171,37 @@ const colorPatterns = [
 		triColors: {},
 		// localTriColors apply per-rhombus index (i) and triangle (t) across all modules
 		localTriColors: {
-			'0-0': '#c9593a', '0-1': '#eb977b',
-			'1-0': '#ffded8', '1-1': '#f4a990',
-			'2-0': '#ee8f72', '2-1': '#ffded8',
-			'3-0': '#eb977e', '3-1': '#a7492f',
-			'4-0': '#b65035', '4-1': '#c9593a',
-			'5-0': '#c9593a', '5-1': '#c9593a'
+			'0-0': '#ffded8', '0-1': '#ffe0d6',
+			'1-0': '#ffdfd7', '1-1': '#ffdfd7',
+			'2-0': '#ec977f', '2-1': '#ec977f',
+			'3-0': '#ed9780', '3-1': '#ee9781',
+			'4-0': '#c85a3a', '4-1': '#c9593a',
+			'5-0': '#c9593a', '5-1': '#ffded8'
 		},
 		// gaps: rotation-based mapping (rot - t)
 		localGapColors: {
-			'0-0': '#c9593a', '0-1': '#c9593a',
-			'60-0': '#ffded8', '60-1': '#ffdfd7',
-			'120-0': '#ffded8', '120-1': '#ffdfd7'
+			'0-0': '#ed9780', '0-1': '#eb977e',
+			'60-0': '#c9593a', '60-1': '#c9593a',
+			'120-0': '#c9593a', '120-1': '#ffded8'
+		}
+	},
+	{
+		name: 'Pattern 3 - Pastel Terra Variant',
+		triColors: {},
+		// localTriColors apply per-rhombus index (i) and triangle (t) across all modules
+		localTriColors: {
+			'0-0': '#ffded8', '0-1': '#ffded8',
+			'1-0': '#fff2f0', '1-1': '#fff3f1',
+			'2-0': '#ec977f', '2-1': '#eb977e',
+			'3-0': '#ed9780', '3-1': '#ee9781',
+			'4-0': '#8d402a', '4-1': '#723322',
+			'5-0': '#632c1d', '5-1': '#ffded8'
+		},
+		// gaps: rotation-based mapping (rot - t)
+		localGapColors: {
+			'0-0': '#ed9780', '0-1': '#ec977f',
+			'60-0': '#c9593a', '60-1': '#c9593a',
+			'120-0': '#a84d34', '120-1': '#ffded8'
 		}
 	},
 	{
@@ -209,17 +209,17 @@ const colorPatterns = [
 		triColors: {},
 		// apply as local mappings so pattern affects all modules
 		localTriColors: {
-			'0-0': '#c9593a', '0-1': '#eb977b',
-			'1-0': '#fdcbba', '1-1': '#d7765b',
-			'2-0': '#3e261e', '2-1': '#ffffff',
-			'3-0': '#784b3b', '3-1': '#40261f',
-			'4-0': '#3f261f', '4-1': '#57372a',
-			'5-0': '#855142', '5-1': '#a56655'
+			'0-0': '#ffded8', '0-1': '#ffded8',
+			'1-0': '#fff2f0', '1-1': '#fff3f1',
+			'2-0': '#632c1d', '2-1': '#8d412a',
+			'3-0': '#8d412a', '3-1': '#a94c34',
+			'4-0': '#8d402a', '4-1': '#723322',
+			'5-0': '#632c1d', '5-1': '#ffded8'
 		},
 		localGapColors: {
-			'0-0': '#57362a', '0-1': '#58352a',
-			'60-0': '#fff6f4', '60-1': '#ffdfd7',
-			'120-0': '#855142', '120-1': '#fffbfa'
+			'0-0': '#632c1d', '0-1': '#632c1d',
+			'60-0': '#c9593a', '60-1': '#c9593a',
+			'120-0': '#a84d34', '120-1': '#ffded8'
 		}
 	}
 ];
@@ -376,26 +376,11 @@ $: applyColorPattern(colorPatternIndex);
 
 onMount(()=>{
 	if (typeof window !== 'undefined') {
-		window.applyRaute5Pattern0 = () => {
+		window.applyRaute6Pattern0 = () => {
 			colorPatternIndex = 0;
 			applyColorPattern(0);
-			console.log('Raute_5: applied color pattern 0');
+			console.log('Raute_6: applied color pattern 0');
 		};
-			window.applyRaute5Pattern1 = () => {
-				colorPatternIndex = 1;
-				applyColorPattern(1);
-				console.log('Raute_5: applied color pattern 1');
-			};
-			window.applyRaute5Pattern2 = () => {
-				colorPatternIndex = 2;
-				applyColorPattern(2);
-				console.log('Raute_5: applied color pattern 2');
-			};
-			window.applyRaute5Pattern3 = () => {
-				colorPatternIndex = 3;
-				applyColorPattern(3);
-				console.log('Raute_5: applied color pattern 3');
-			};
 	}
 });
 
@@ -564,59 +549,59 @@ $: gapColorMap = monoColor ? {
 };
 
 onMount(() => {
-	window.debugColorsRaute5 = () => {
-		const payload = {
-			triColors: triColors,
-			localTriColors: localTriColors,
-			gapTriColors: gapTriColors,
-			localGapColors: localGapColors
+		window.debugColorsRaute5 = () => {
+			const payload = {
+				triColors: triColors,
+				localTriColors: localTriColors,
+				gapTriColors: gapTriColors,
+				localGapColors: localGapColors
+			};
+			console.log('triColors:', payload.triColors);
+			console.log('localTriColors:', payload.localTriColors);
+			console.log('gapTriColors:', payload.gapTriColors);
+			console.log('localGapColors:', payload.localGapColors);
+			// make it easy to copy/export from the console
+			window.lastRaute5Colors = payload;
+			return payload;
 		};
-		console.log('triColors:', payload.triColors);
-		console.log('localTriColors:', payload.localTriColors);
-		console.log('gapTriColors:', payload.gapTriColors);
-		console.log('localGapColors:', payload.localGapColors);
-		// make it easy to copy/export from the console
-		window.lastRaute5Colors = payload;
-		return payload;
-	};
-	// helper: enumerate triangles (sequential index + identifying keys) and copy mapping to clipboard
-	window.dumpRaute5Triangles = () => {
-		const svg = document.getElementById('raute5-svg');
-		if (!svg) return console.warn('raute5-svg not found');
-		const polys = Array.from(svg.querySelectorAll('polygon'));
-		const out = polys.map((p, idx) => {
-			const obj = { index: idx, fill: p.getAttribute('fill') };
-			// star triangle keys
-			if (p.hasAttribute('data-star-row')) {
-				obj.type = 'star';
-				obj.starRow = p.getAttribute('data-star-row');
-				obj.starCol = p.getAttribute('data-star-col');
-				obj.i = p.getAttribute('data-i');
-				obj.t = p.getAttribute('data-t');
-			} else if (p.hasAttribute('data-gap-row')) {
-				obj.type = 'gap';
-				obj.gapRow = p.getAttribute('data-gap-row');
-				obj.gapCol = p.getAttribute('data-gap-col');
-				obj.rotation = p.getAttribute('data-gap-rotation');
-				obj.t = p.getAttribute('data-t');
-			}
-			return obj;
-		});
-			// try navigator.clipboard first, fallback to console copy helper
-			const text = JSON.stringify(out, null, 2);
-			if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
-				navigator.clipboard.writeText(text).then(() => console.log('copied', out.length, 'triangles to clipboard'))
-					.catch(() => { try { copy(text); console.log('copied (fallback)', out.length, 'triangles to clipboard'); } catch (e) { console.warn('could not copy to clipboard'); } });
-			} else {
-				try { copy(text); console.log('copied', out.length, 'triangles to clipboard'); } catch (e) { console.warn('could not copy to clipboard'); }
-			}
-			return out;
-	};
+		// helper: enumerate triangles (sequential index + identifying keys) and copy mapping to clipboard
+		window.dumpRaute5Triangles = () => {
+			const svg = document.getElementById('raute6-svg');
+			if (!svg) return console.warn('raute6-svg not found');
+			const polys = Array.from(svg.querySelectorAll('polygon'));
+			const out = polys.map((p, idx) => {
+				const obj = { index: idx, fill: p.getAttribute('fill') };
+				// star triangle keys
+				if (p.hasAttribute('data-star-row')) {
+					obj.type = 'star';
+					obj.starRow = p.getAttribute('data-star-row');
+					obj.starCol = p.getAttribute('data-star-col');
+					obj.i = p.getAttribute('data-i');
+					obj.t = p.getAttribute('data-t');
+				} else if (p.hasAttribute('data-gap-row')) {
+					obj.type = 'gap';
+					obj.gapRow = p.getAttribute('data-gap-row');
+					obj.gapCol = p.getAttribute('data-gap-col');
+					obj.rotation = p.getAttribute('data-gap-rotation');
+					obj.t = p.getAttribute('data-t');
+				}
+				return obj;
+			});
+				// try navigator.clipboard first, fallback to console copy helper
+				const text = JSON.stringify(out, null, 2);
+				if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+					navigator.clipboard.writeText(text).then(() => console.log('copied', out.length, 'triangles to clipboard'))
+						.catch(() => { try { copy(text); console.log('copied (fallback)', out.length, 'triangles to clipboard'); } catch (e) { console.warn('could not copy to clipboard'); } });
+				} else {
+					try { copy(text); console.log('copied', out.length, 'triangles to clipboard'); } catch (e) { console.warn('could not copy to clipboard'); }
+				}
+				return out;
+		};
 
-		// helper: dump only the central module's 18 triangles (star + its 3 gaps => 12 + 6 = 18)
-		window.dumpRaute5Central = () => {
-			const svg = document.getElementById('raute5-svg');
-			if (!svg) return console.warn('raute5-svg not found');
+			// helper: dump only the central module's 18 triangles (star + its 3 gaps => 12 + 6 = 18)
+		window.dumpRaute6Central = () => {
+			const svg = document.getElementById('raute6-svg');
+			if (!svg) return console.warn('raute6-svg not found');
 			// gather available star rows/cols
 			const starPolys = Array.from(svg.querySelectorAll('polygon[data-star-row][data-star-col]'));
 			if (starPolys.length === 0) return console.warn('no star polygons found');
@@ -666,13 +651,29 @@ onMount(() => {
 			}
 			return out;
 		};
+
+		// Raute 6 debug exporter (mirror of Raute5 but separate namespace)
+		window.debugColorsRaute6 = () => {
+			const payload = {
+				triColors: triColors,
+				localTriColors: localTriColors,
+				gapTriColors: gapTriColors,
+				localGapColors: localGapColors
+			};
+			console.log('triColors (raute6):', payload.triColors);
+			console.log('localTriColors (raute6):', payload.localTriColors);
+			console.log('gapTriColors (raute6):', payload.gapTriColors);
+			console.log('localGapColors (raute6):', payload.localGapColors);
+			window.lastRaute6Colors = payload;
+			return payload;
+		};
 });
 </script>
 
 <div class="svg-container">
 	<!-- Mitte: SVG Pattern -->
 	<div style="flex: 1; height: 100%; display: flex; align-items: center; justify-content: center;">
-		<svg id="raute5-svg" viewBox="-900 -1000 1800 2000" class="svg-canvas" shape-rendering="crispEdges" style="max-width: 100%; max-height: 100%; aspect-ratio: 0.9;">
+		<svg id="raute6-svg" viewBox="-900 -1000 1800 2000" class="svg-canvas" shape-rendering="crispEdges" style="max-width: 100%; max-height: 100%; aspect-ratio: 0.9;">
 		<g transform="scale({scale})">
 			{#key [colors, radialDistortion]}
 			{#each moduleCenters as star}

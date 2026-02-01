@@ -183,15 +183,14 @@ const presets = [
 	['#A0B5A8', '#2E5F3A', '#D8F0E2'],
 	['#F6D6AD', '#F28C66', '#C85A3A'],
 	['#D6EAF8', '#8FBFE0', '#2A6F97'],
-	['#FFE6F0', '#FF9EC3', '#FF5A9E'],
-	['#FFF4D6', '#FFD27A', '#FF9B3B']
+	['#FFE6F0', '#FF9EC3', '#FF5A9E']
 ];
 
 let selectedPreset = 1; // use the warm preset (#F6D6AD) by default
 
 // Lightness range and brightness adjustment
-let minLight = 20; // percent
-let maxLight = 80; // percent
+let minLight = 0; // percent
+let maxLight = 100; // percent
 
 function selectPreset(i) {
 	selectedPreset = i;

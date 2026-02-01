@@ -60,7 +60,7 @@ const baseDistance = a * sqrt3 * 1.727;
 const rowSpacing = moduleHeight * 0.75;
 
 // Slider Werte (props in runes mode)
-let { rows = 15, steps = 12, gapSize = 0.0, triangleOpacity = 50, starSpacing = 1.0, rotation = 0, showGaps = true, monoColor = true, colors = ['#a8d8ff', '#6aa0e6', '#e6f7ff'] } = $props();
+let { rows = 15, steps = 12, gapSize = 0.0, triangleOpacity = 50, starSpacing = 1.0, rotation = 0, showGaps = true, monoColor = true, colors = ['#c9593a', '#333333', '#e6e6e6'] } = $props();
 
 // Wenn starSpacing < 1.0: Sterne werden kleiner, Abstand bleibt 1.0
 // Wenn starSpacing >= 1.0: Sterne bleiben normal, Abstand wird größer
@@ -71,7 +71,7 @@ let d = $derived(baseDistance * actualDistance);
 let verticalSpacing = $derived(rowSpacing * actualDistance);
 
 // Farben
-const defaultColors = ['#a8d8ff', '#6aa0e6', '#e6f7ff'];
+const defaultColors = ['#c9593a', '#333333', '#e6e6e6'];
 
 function clamp01(v) {
     if (v == null || Number.isNaN(v)) return 0;
@@ -88,7 +88,7 @@ export function randomizeColors() {
 }
 
 export function resetColors() {
-    colors = ['#a8d8ff', '#6aa0e6', '#e6f7ff'];
+	colors = ['#c9593a', '#333333', '#e6e6e6'];
 }
 
 export function toggleGaps() {
@@ -106,7 +106,7 @@ export function resetToDefaults() {
     rotation = 0;
     showGaps = true;
     monoColor = true;
-    colors = ['#a8d8ff', '#6aa0e6', '#e6f7ff'];
+	colors = ['#c9593a', '#333333', '#e6e6e6'];
 }
 
 // Sternpositionen berechnen

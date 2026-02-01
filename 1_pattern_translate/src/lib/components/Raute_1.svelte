@@ -65,7 +65,7 @@ const rowSpacing = moduleHeight * 0.75;
 export let rows = 15;
 export let steps = 12;
 export let gapSize = 0.0;
-export let triangleOpacity = 50;
+export let triangleOpacity = 100;
 export let starSpacing = 1.0;
 export let rotation = 0;
 export let showGaps = true;
@@ -89,15 +89,14 @@ const presets = [
 	['#5C7A58', '#6B8A5F', '#D8F0E2'], // green tones with increased contrast
 	['#F6D6AD', '#F28C66', '#C85A3A'],
 	['#D6EAF8', '#8FBFE0', '#2A6F97'],
-	['#FFE6F0', '#FF9EC3', '#FF5A9E'],
-	['#FFF4D6', '#FFD27A', '#FF9B3B']
+	['#FFE6F0', '#FF9EC3', '#FF5A9E']
 ];
 
 let selectedPreset = 0; // keep green preset selected by default
 
 // Lightness range and brightness adjustment
-let minLight = 20; // percent
-let maxLight = 80; // percent
+let minLight = 0; // percent
+let maxLight = 100; // percent
 
 function selectPreset(i) {
 	selectedPreset = i;

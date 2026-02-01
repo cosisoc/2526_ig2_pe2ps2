@@ -402,6 +402,13 @@ export function setColorForLocalGap(rot, t, color) {
     display: flex;
     align-items: center;
     justify-content: center;
+    background: #f5f5f5;
+  }
+
+  .svg-canvas {
+    width: 100%;
+    height: 100%;
+    background: white;
   }
 
   :global(.raute4-controls) {

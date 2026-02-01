@@ -8,7 +8,8 @@
 	import Raute2 from '$lib/components/Raute_2.svelte';	
 	import Raute3 from '$lib/components/Raute_3.svelte';	
 	import Raute4 from '$lib/components/Raute_4.svelte';	
-	import Raute5 from '$lib/components/Raute_5.svelte';
+	import Raute6 from '$lib/components/Raute_6.svelte';
+	import Raute7 from '$lib/components/Raute_7.svelte';
 
 	// Beschreibung der Patterns für die Sidebar, mit Verknüpfung zu euren Komponenten
 	let patterns = [
@@ -23,34 +24,40 @@
 		// 	description: 'A grid of squares divided into two triangles that can get an offset and size.'
 		// }o,
 		{
-			name: 'Anfang (raute)',
+			name: 'Anfangsmuster - Raute',
 			component: Pattern0,
-			description: 'Basic rhombus star pattern'
+			description: 'Anfangsmuster mit schwarz-weißen Rauten'
 		},
 		{
-			name: 'Farbe (raute1)',
+			name: 'Farbpaletten ',
 			component: Raute1,
-			description: 'Variation 1 with color mapping'
+			description: 'Erste Variation mit Farbpaletten'
 		},
 		{
-			name: 'Abstand (raute2)',
+			name: 'Abstände',
 			component: Raute2,
-			description: 'Variation 2 with offsets'
+			description: 'Variation der Abstände zwischen den Stern-Rauten'
 		},
 		{
-			name: 'Raute 3',
+			name: 'Verzerrung',
 			component: Raute3,
-			description: 'Distorted / warped variation'
+			description: 'Verzerrung der Rauten'
 		},
 		{
-			name: 'Raute 4',
+			name: '(kommt später weg)',
 			component: Raute4,
 			description: 'Full control variant (controls in left sidebar)'
 		},
+
 		{
-			name: 'Raute 5',
-			component: Raute5,
-			description: 'Utility / position-based controls'
+			name: 'Farbmuster Variation',
+			component: Raute6,
+			description: 'Variation mit vordefinierten Mustern'
+		},
+		{
+			name: 'Raute 7',
+			component: Raute7,
+			description: 'Raute 7 Ansicht'
 		}
 	];
 
