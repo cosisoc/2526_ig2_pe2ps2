@@ -403,7 +403,7 @@ function chooseInnerColor(star, i) {
 	</div>
 
 	<div class="sidebar-right">
-			<Slider min={0} max={100} bind:value={triangleOpacity} label="Deckkraft 2. Dreieck" />
+  <Slider min={0} max={100} bind:value={triangleOpacity} label="Deckkraft" />
 		<Toggle bind:value={showGaps} label="Lücken anzeigen" />
 		<hr />
 		<div style="width:310px;">

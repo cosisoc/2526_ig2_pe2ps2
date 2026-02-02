@@ -346,7 +346,7 @@ export function setColorForLocalGap(rot, t, color) {
 </div>
 
 <div class="sidebar-right">
-  <Slider min={0} max={100} bind:value={triangleOpacity} label="Deckkraft 2. Dreieck" />
+  <Slider min={0} max={100} bind:value={triangleOpacity} label="Deckkraft" />
   <Slider min={0.2} max={3.5} step={0.01} bind:value={starSpacing} label="Abstand Sterne" />
   <Slider min={0} max={4} step={0.1} bind:value={strokeWidth} label="Linienstärke" />
   <Slider min={0.3} max={3} step={0.05} bind:value={scale} label="Zoom" />

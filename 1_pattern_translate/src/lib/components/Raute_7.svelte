@@ -2,6 +2,7 @@
 import Slider from '$lib/ui/Slider.svelte';
 import Toggle from '$lib/ui/Toggle.svelte';
 import { onMount } from 'svelte';
+import RangeSlider from '$lib/ui/RangeSlider.svelte';
 // Größe eines Quadrats (rotiert um 45°)
 const size = 170;
 
@@ -10,15 +11,122 @@ export let rows = 17;
 export let cols = 17;
 export let triangleOpacity = 100;
 export let spacing = 1.0;
-export let strokeWidth = 0.5;
+export let strokeWidth = 0;
 export let showStrokes = true;
 export let rotation = 0;
 export let scale = 1.0;
+export let rowShift = 0;
+
+const rowShiftStorageKey = 'raute7-rowShift';
 
 // Farben für die Dreiecke
 let color1 = '#3b82f6'; // Blau
 let color2 = '#ef4444';
 let color3 = '#1f2937'; // Dunkelgrau/Schwarz
+
+// Lightness remapping (same approach as other Raute components)
+let minLight = 0; // percent
+let maxLight = 100; // percent
+const lightStorageKey = 'raute7-lightRange';
+
+let hueShift = 0; // 0-360 degrees
+const hueStorageKey = 'raute7-hueShift';
+
+$: try {
+    if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(lightStorageKey, JSON.stringify({ minLight, maxLight }));
+        localStorage.setItem(hueStorageKey, JSON.stringify(hueShift));
+		localStorage.setItem(rowShiftStorageKey, JSON.stringify(rowShift));
+    }
+} catch (e) {}
+
+function hexToRgb(hex) {
+	hex = hex.replace('#', '');
+	if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+	const num = parseInt(hex, 16);
+	return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+}
+
+function rgbToHex({ r, g, b }) {
+	const two = (n) => n.toString(16).padStart(2, '0');
+	return '#' + two(Math.round(r)).toLowerCase() + two(Math.round(g)).toLowerCase() + two(Math.round(b)).toLowerCase();
+}
+
+function rgbToHsl({ r, g, b }) {
+	r /= 255; g /= 255; b /= 255;
+	const max = Math.max(r, g, b), min = Math.min(r, g, b);
+	let h, s, l = (max + min) / 2;
+	if (max === min) {
+		h = s = 0;
+	} else {
+		const d = max - min;
+		s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+		switch (max) {
+			case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+			case g: h = (b - r) / d + 2; break;
+			case b: h = (r - g) / d + 4; break;
+		}
+		h /= 6;
+	}
+	return { h: h * 360, s: s * 100, l: l * 100 };
+}
+
+function hslToRgb({ h, s, l }) {
+	h /= 360; s /= 100; l /= 100;
+	let r, g, b;
+	if (s === 0) {
+		r = g = b = l;
+	} else {
+		const hue2rgb = (p, q, t) => {
+			if (t < 0) t += 1;
+			if (t > 1) t -= 1;
+			if (t < 1/6) return p + (q - p) * 6 * t;
+			if (t < 1/2) return q;
+			if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+			return p;
+		};
+		const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+		const p = 2 * l - q;
+		r = hue2rgb(p, q, h + 1/3);
+		g = hue2rgb(p, q, h);
+		b = hue2rgb(p, q, h - 1/3);
+	}
+	return { r: r * 255, g: g * 255, b: b * 255 };
+}
+
+					// load persisted row shift
+					try {
+						const raw = localStorage.getItem(rowShiftStorageKey);
+						if (raw) {
+							const val = JSON.parse(raw);
+							if (typeof val === 'number') rowShift = val;
+						}
+					} catch (e) {}
+function mapLightness(hex) {
+	if (!hex) return hex;
+	const rgb = hexToRgb(hex);
+	const hsl = rgbToHsl(rgb);
+	// preserve black/near-black colors (lightness < 5%)
+	if (hsl.l < 5) return hex;
+	const capFactor = 0.8;
+	const effectiveMax = Math.max(minLight, Math.min(100, maxLight * capFactor));
+	const mappedL = minLight + (hsl.l / 100) * (effectiveMax - minLight);
+	const newRgb = hslToRgb({ h: hsl.h, s: hsl.s, l: mappedL });
+	return rgbToHex(newRgb);
+}
+
+function applyHueShift(hex) {
+	if (!hex || hueShift === 0) return hex;
+	const rgb = hexToRgb(hex);
+	const hsl = rgbToHsl(rgb);
+	// preserve black/near-black and very desaturated colors
+	if (hsl.l < 5 || hsl.s < 5) return hex;
+	const shiftedH = (hsl.h + hueShift) % 360;
+	// reduce saturation for pastel effect (multiply by 0.6 for softer colors)
+	const pastelS = hsl.s * 0.6;
+	const newRgb = hslToRgb({ h: shiftedH, s: pastelS, l: hsl.l });
+	return rgbToHex(newRgb);
+}
 
 // vordefinierte Farb-Muster (erstes Muster = gewünschte Farbcodes)
 const colorPatterns = [
@@ -45,6 +153,9 @@ let localTriColors = {};
 let selected = null;
 let selectedColor = '#ff0000';
 let applyToAll = true;
+
+// Force reactivity when lightness range or hue changes
+$: lightnessKey = `${minLight}-${maxLight}-${hueShift}`;
 
 // Funktion zum Erstellen eines geteilten Quadrats
 function createSquare(cx, cy, size, type) {
@@ -83,7 +194,9 @@ $: pattern = (() => {
 	let blocks = [];
 	for (let row = 0; row < rows; row++) {
 		for (let col = 0; col < cols; col++) {
-			const blockCx = col * blockWidth;
+			// alternate rows shift: even rows left, odd rows right
+			const rowOffset = (row % 2 === 0) ? -rowShift : rowShift;
+			const blockCx = col * blockWidth + rowOffset;
 			const blockCy = row * blockHeight;
 			const topSquare = createSquare(
 				blockCx + blockWidth / 2,
@@ -258,7 +371,24 @@ onMount(() => {
 					localTriColors = buildUserPatternMap();
 					localStorage.setItem(storageKey, JSON.stringify(localTriColors));
 				}
-			} catch (e) {
+
+						// load persisted light range if present
+						try {
+							const lightRaw = localStorage.getItem(lightStorageKey);
+							if (lightRaw) {
+								const obj = JSON.parse(lightRaw);
+								if (typeof obj.minLight === 'number') minLight = obj.minLight;
+								if (typeof obj.maxLight === 'number') maxLight = obj.maxLight;
+							}
+						} catch (e) {}
+					// load persisted hue shift
+					try {
+						const hueRaw = localStorage.getItem(hueStorageKey);
+						if (hueRaw) {
+							const val = JSON.parse(hueRaw);
+							if (typeof val === 'number') hueShift = val;
+						}
+					} catch (e) {}			} catch (e) {
 				console.warn('Raute7: failed to load/save persisted pattern', e);
 			}
 
@@ -268,7 +398,7 @@ onMount(() => {
 					for (const square of block.squares) {
 						for (let idx = 0; idx < square.triangles.length; idx++) {
 							const key = getTriKey(block.row, block.col, square.type, idx);
-							const color = localTriColors[key] ?? getTriangleColor(square.type, idx);
+							const color = localTriColors[key] ?? mapLightness(getTriangleColor(square.type, idx));
 							map[key] = color;
 						}
 					}
@@ -292,7 +422,7 @@ onMount(() => {
 					for (const square of block.squares) {
 						for (let idx = 0; idx < square.triangles.length; idx++) {
 							const key = getTriKey(block.row, block.col, square.type, idx);
-							const color = localTriColors[key] ?? getTriangleColor(square.type, idx);
+							const color = localTriColors[key] ?? mapLightness(getTriangleColor(square.type, idx));
 							map[key] = color;
 						}
 					}
@@ -382,18 +512,17 @@ onMount(() => {
 						{#each block.squares as square}
 							{#each square.triangles as tri, idx}
 								{@const key = getTriKey(block.row, block.col, square.type, idx)}
-								{@const defaultFill = getTriangleColor(square.type, idx)}
-								<polygon
-									data-star-row={block.row}
-									data-star-col={block.col}
-									data-i={idx}
-									data-t={square.type}
-									points={pointsToStr(tri)}
-									fill={localTriColors[key] ?? defaultFill}
+							<polygon
+								data-star-row={block.row}
+								data-star-col={block.col}
+								data-i={idx}
+								data-t={square.type}
+								points={pointsToStr(tri)}
+							fill={lightnessKey && applyHueShift(mapLightness(localTriColors[key] ?? getTriangleColor(square.type, idx)))}
 									opacity={triangleOpacity / 100}
 									stroke={showStrokes ? '#000' : 'none'}
 									stroke-width={strokeWidth}
-                                    
+						
 								/>
 							{/each}
 
@@ -401,7 +530,7 @@ onMount(() => {
 								<polygon
 									points={pointsToStr(
 										getOuterSquare(
-											block.col * blockWidth + (square.type === 'left' ? scaledSize / 2 : (square.type === 'right' ? blockWidth - scaledSize / 2 : blockWidth / 2)),
+											block.col * blockWidth + ((block.row % 2 === 0) ? -rowShift : rowShift) + (square.type === 'left' ? scaledSize / 2 : (square.type === 'right' ? blockWidth - scaledSize / 2 : blockWidth / 2)),
 											block.row * blockHeight + (square.type === 'top' ? scaledSize / 2 : (square.type === 'bottom' ? blockHeight - scaledSize / 2 : blockHeight / 2)),
 											scaledSize
 										)
@@ -419,7 +548,11 @@ onMount(() => {
 	</div>
 
 	<div class="sidebar-right">
+		<RangeSlider min={0} max={100} step={1} bind:value1={minLight} bind:value2={maxLight} label="Lightness" />
+		<Slider min={0} max={360} step={1} bind:value={hueShift} label="Hue Shift" />
+		<Slider min={-2826} max={2826} step={1} bind:value={rowShift} label="Reihenversatz" />
 		<Slider min={0.45} max={3} step={0.05} bind:value={scale} label="Zoom" />
+		
 		{#if selected}
 			<hr />
 			<div class="label">Ausgewähltes Dreieck:</div>

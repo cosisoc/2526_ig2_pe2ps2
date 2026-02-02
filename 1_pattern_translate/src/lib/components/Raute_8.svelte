@@ -1,3 +1,4 @@
+
 <script>
 import Slider from '$lib/ui/Slider.svelte';
 import Toggle from '$lib/ui/Toggle.svelte';
@@ -21,7 +22,7 @@ function rotatePoint(x, y, degrees) {
 	const cos = Math.cos(rad);
 	const sin = Math.sin(rad);
 	return [x * cos - y * sin, x * sin + y * cos];
-	}
+}
 let rhombi = [];
 for (let i = 0; i < 6; i++) {
 	let rotatedRhombus = [];
@@ -126,7 +127,7 @@ export let steps = 12;
 export let gapSize = 0.0;
 export let triangleOpacity = 100;
 export let starSpacing = 1.0; // Default auf 1.0 für Raute 3
-export let strokeWidth = 0.2;
+export let strokeWidth = 0.0;
 export let scale = 1.0;
 export let rotation = 0;
 export let showGaps = true;
@@ -148,63 +149,6 @@ let localGapColors = {};
 export let colorPatternIndex = 0;
 const colorPatterns = [
 	{
-		name: 'Pattern 1 - Imported',
-		triColors: {},
-		// localTriColors apply per-rhombus index (i) and triangle (t) across all modules
-		localTriColors: {
-			'0-0': '#ffdfd7', '0-1': '#ffdfd7',
-			'1-0': '#ffdfd7', '1-1': '#ffdfd7',
-			'2-0': '#ffdfd7', '2-1': '#ffdfd7',
-			'3-0': '#ffdfd7', '3-1': '#ffdfd7',
-			'4-0': '#c9593a', '4-1': '#c9593a',
-			'5-0': '#c9593a', '5-1': '#ffdfd7'
-		},
-		// gaps: rotation-based mapping (rot - t)
-		localGapColors: {
-			'0-0': '#ffdfd7', '0-1': '#ffdfd7',
-			'60-0': '#c9593a', '60-1': '#ffdfd7',
-			'120-0': '#c9593a', '120-1': '#ffdfd7'
-		}
-	},
-	{
-		name: 'Pattern 2 - Pastel Terra',
-		triColors: {},
-		// localTriColors apply per-rhombus index (i) and triangle (t) across all modules
-		localTriColors: {
-			'0-0': '#ffded8', '0-1': '#ffe0d6',
-			'1-0': '#ffdfd7', '1-1': '#ffdfd7',
-			'2-0': '#ec977f', '2-1': '#ec977f',
-			'3-0': '#ed9780', '3-1': '#ee9781',
-			'4-0': '#c85a3a', '4-1': '#c9593a',
-			'5-0': '#c9593a', '5-1': '#ffded8'
-		},
-		// gaps: rotation-based mapping (rot - t)
-		localGapColors: {
-			'0-0': '#ed9780', '0-1': '#eb977e',
-			'60-0': '#c9593a', '60-1': '#c9593a',
-			'120-0': '#c9593a', '120-1': '#ffded8'
-		}
-	},
-	{
-		name: 'Pattern 3 - Pastel Terra Variant',
-		triColors: {},
-		// localTriColors apply per-rhombus index (i) and triangle (t) across all modules
-		localTriColors: {
-			'0-0': '#ffded8', '0-1': '#ffded8',
-			'1-0': '#fff2f0', '1-1': '#fff3f1',
-			'2-0': '#ec977f', '2-1': '#eb977e',
-			'3-0': '#ed9780', '3-1': '#ee9781',
-			'4-0': '#8d402a', '4-1': '#723322',
-			'5-0': '#632c1d', '5-1': '#ffded8'
-		},
-		// gaps: rotation-based mapping (rot - t)
-		localGapColors: {
-			'0-0': '#ed9780', '0-1': '#ec977f',
-			'60-0': '#c9593a', '60-1': '#c9593a',
-			'120-0': '#a84d34', '120-1': '#ffded8'
-		}
-	},
-	{
 		name: 'Pattern 3 - Imported from Raute4',
 		triColors: {},
 		// apply as local mappings so pattern affects all modules
@@ -220,6 +164,60 @@ const colorPatterns = [
 			'0-0': '#632c1d', '0-1': '#632c1d',
 			'60-0': '#c9593a', '60-1': '#c9593a',
 			'120-0': '#a84d34', '120-1': '#ffded8'
+		}
+	},
+	{
+		name: 'Pattern 4 - Ocean Deep',
+		triColors: {},
+		// Tiefes Ozean-Muster mit Türkis, Blau und dunklen Akzenten
+		localTriColors: {
+			'0-0': '#0a4d68', '0-1': '#088395',
+			'1-0': '#05bfdb', '1-1': '#9de5f5',
+			'2-0': '#0a4d68', '2-1': '#05728d',
+			'3-0': '#088395', '3-1': '#00a8cc',
+			'4-0': '#05bfdb', '4-1': '#7dd3e8',
+			'5-0': '#0a4d68', '5-1': '#088395'
+		},
+		localGapColors: {
+			'0-0': '#05bfdb', '0-1': '#7dd3e8',
+			'60-0': '#088395', '60-1': '#00a8cc',
+			'120-0': '#0a4d68', '120-1': '#05728d'
+		}
+	},
+	{
+		name: 'Pattern 5 - Sunset Glow',
+		triColors: {},
+		// Sonnenuntergang mit warmen Tönen von Lila über Orange bis Gelb
+		localTriColors: {
+			'0-0': '#4a1c40', '0-1': '#6b2d5c',
+			'1-0': '#d4526e', '1-1': '#ff6b9d',
+			'2-0': '#f7934c', '2-1': '#ffb26b',
+			'3-0': '#ffd23f', '3-1': '#ffebb7',
+			'4-0': '#d4526e', '4-1': '#ff8fab',
+			'5-0': '#6b2d5c', '5-1': '#a44a7d'
+		},
+		localGapColors: {
+			'0-0': '#f7934c', '0-1': '#ffc288',
+			'60-0': '#ffd23f', '60-1': '#ffe5a0',
+			'120-0': '#d4526e', '120-1': '#ff97b5'
+		}
+	},
+	{
+		name: 'Pattern 6 - Forest Moss',
+		triColors: {},
+		// Waldmoos mit satten Grüntönen und erdigen Akzenten
+		localTriColors: {
+			'0-0': '#1a3a1f', '0-1': '#2d5016',
+			'1-0': '#4a7c3f', '1-1': '#6b8e23',
+			'2-0': '#8fb339', '2-1': '#a8c256',
+			'3-0': '#c4d88b', '3-1': '#e0edd5',
+			'4-0': '#6b8e23', '4-1': '#9acd32',
+			'5-0': '#2d5016', '5-1': '#4a7c3f'
+		},
+		localGapColors: {
+			'0-0': '#8fb339', '0-1': '#b5cc6a',
+			'60-0': '#c4d88b', '60-1': '#dce8c1',
+			'120-0': '#4a7c3f', '120-1': '#6b9656'
 		}
 	}
 ];
@@ -306,7 +304,7 @@ export function toggleMonoColor() {
 
 export function resetToDefaults() {
 	gapSize = 0.0;
-	triangleOpacity = 50;
+	triangleOpacity = 100;
 	starSpacing = 1.0;
 	rotation = 0;
 	showGaps = true;
@@ -414,8 +412,7 @@ $: gapCenters = (() => {
 	const baseRowSpacing = staticMetrics.rowSpacing;
 	const baseDist = staticMetrics.baseDistance;
 	const centerOffsetY = -((rows - 1) / 2) * baseRowSpacing;
-	// Gap-Abstand bleibt konstant (original Größe)
-	const baseGapDistance = a * sqrt3;
+	const baseGapDistance = a * sqrt3 * (1.0 + gapSize);
 	
 	for (let row = 0; row < rows; row++) {
 		const baseY = row * baseRowSpacing + centerOffsetY;
@@ -667,6 +664,18 @@ onMount(() => {
 			window.lastRaute6Colors = payload;
 			return payload;
 		};
+
+		// If no colors are provided (empty triColors/localTriColors), initialize
+		// a sensible default so the component doesn't render fully black.
+		if (typeof window !== 'undefined') {
+			if ((!triColors || Object.keys(triColors).length === 0) && (!localTriColors || Object.keys(localTriColors).length === 0)) {
+				for (let i = 0; i < 6; i++) {
+					localTriColors[`${i}-0`] = defaultColorFor(i, 0);
+					localTriColors[`${i}-1`] = defaultColorFor(i, 1);
+				}
+				localTriColors = { ...localTriColors };
+			}
+		}
 });
 </script>
 
@@ -688,6 +697,7 @@ onMount(() => {
 							data-star-col={star.col}
 							data-i={i}
 							data-t={0}
+							on:click={() => selectTriangle(star.row, star.col, i, 0)}
 						/>
 						<polygon 
 							points={pointsToStr([rhombus[0], rhombus[1], rhombus[2]])} 
@@ -699,6 +709,7 @@ onMount(() => {
 							data-star-col={star.col}
 							data-i={i}
 							data-t={1}
+							on:click={() => selectTriangle(star.row, star.col, i, 1)}
 						/>
 						<line 
 							x1={rhombus[0][0]} 
@@ -706,7 +717,7 @@ onMount(() => {
 							x2={rhombus[2][0]} 
 							y2={rhombus[2][1]} 
 							stroke="#000" 
-							stroke-width="0" 
+							stroke-width={strokeWidth} 
 						/>
 					{/each}
 				</g>
@@ -714,27 +725,29 @@ onMount(() => {
 
 			{#if showGaps}
 			{#each gapCenters as gap}
-				<g transform="translate({gap.x} {gap.y}) rotate({rotation + gap.rotation})">
+			<g transform="translate({gap.x} {gap.y}) rotate({rotation + gap.rotation}) scale(1, {gapScale})">
 					<polygon 
 							points={pointsToStr([distortedGapRhombus[0], distortedGapRhombus[3], distortedGapRhombus[2]])} 
 							fill={gapTriColors[getGapKey(gap.row, gap.col, gap.rotation, 0)] || localGapColors[`${gap.rotation}-0`] || ensureGapColor(gap.row, gap.col, gap.rotation, 0)} 
-						stroke="#000" 
-						stroke-width="0" 
+							stroke="#000" 
+							stroke-width={strokeWidth} 
 						data-gap-row={gap.row}
 						data-gap-col={gap.col}
 						data-gap-rotation={gap.rotation}
 						data-t={0}
+						on:click={() => selectGapTriangle(gap.row, gap.col, gap.rotation, 0)}
 						/>
 						<polygon 
 							points={pointsToStr([distortedGapRhombus[0], distortedGapRhombus[1], distortedGapRhombus[2]])} 
 							fill={gapTriColors[getGapKey(gap.row, gap.col, gap.rotation, 1)] || localGapColors[`${gap.rotation}-1`] || ensureGapColor(gap.row, gap.col, gap.rotation, 1)} 
 						fill-opacity={triangleOpacity / 100} 
-						stroke="#000" 
-						stroke-width="0" 
+							stroke="#000" 
+							stroke-width={strokeWidth} 
 						data-gap-row={gap.row}
 						data-gap-col={gap.col}
 						data-gap-rotation={gap.rotation}
 						data-t={1}
+						on:click={() => selectGapTriangle(gap.row, gap.col, gap.rotation, 1)}
 						/>
 					<line 
 						x1={distortedGapRhombus[0][0]} 
@@ -742,7 +755,7 @@ onMount(() => {
 						x2={distortedGapRhombus[2][0]} 
 						y2={distortedGapRhombus[2][1]} 
 						stroke="#000" 
-						stroke-width="0" 
+						stroke-width={strokeWidth} 
 					/>
 				</g>
 			{/each}
@@ -760,6 +773,23 @@ onMount(() => {
 			<Slider min={-6.7} max={0} step={0.01} bind:value={radialDistortion} label="Verzerrung" />
 		
 		<Slider min={0.45} max={3} step={0.05} bind:value={scale} label="Zoom" />
+		
+		<!-- Volle Kontrolle: zusätzliche Regler -->
+		<Slider min={0} max={3} step={0.05} bind:value={strokeWidth} label="Strichstärke" />
+		<Slider min={0.06} max={5} step={0.01} bind:value={starSpacing} label="Abstand Sterne" />
+		<Slider min={0} max={100} step={1} bind:value={triangleOpacity} label="Deckkraft" />
+		
+		<hr />
+		<button on:click={resetToDefaults} class="reset-button">Zurücksetzen</button>
+		
+		{#if selected}
+			<hr />
+			<div class="label">Ausgewähltes Dreieck:</div>
+			<input type="color" bind:value={selectedColor} on:change={() => applySelectedColor()} style="width: 100%; height: 40px; margin-bottom: 10px;" />
+		{:else}
+			<hr />
+			<div class="label" style="color: #999; text-align: center;">Klicke ein dreieck an für mehr Farbauswahl</div>
+		{/if}
 	</div>
 
 	<style>
@@ -950,5 +980,27 @@ onMount(() => {
 		font-size: 11px;
 		color: #666;
 		text-align: center;
+	}
+
+	.reset-button {
+		width: 100%;
+		padding: 8px 15px;
+		background: #999;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		font-family: Arial, sans-serif;
+		font-size: 13px;
+		transition: background 0.2s;
+		margin-bottom: 10px;
+	}
+
+	.reset-button:hover {
+		background: #777;
+	}
+
+	.reset-button:active {
+		background: #666;
 	}
 </style>

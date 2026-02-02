@@ -468,7 +468,7 @@ $: gapColorMap = monoColor ? {
 </div>
 
 <div class="sidebar-right">
-	<Slider min={-6.7} max={0} step={0.01} bind:value={radialDistortion} label="Radial Distortion" />
+	<Slider min={-6.7} max={0} step={0.01} bind:value={radialDistortion} label="Verzerrung" />
 	<hr />
 	<div style="width:310px;">
 		<label style="display:block; margin-bottom:6px; font-weight:600;">Presets</label>

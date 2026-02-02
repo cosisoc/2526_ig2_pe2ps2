@@ -10,6 +10,7 @@
 	import Raute4 from '$lib/components/Raute_4.svelte';	
 	import Raute6 from '$lib/components/Raute_6.svelte';
 	import Raute7 from '$lib/components/Raute_7.svelte';
+	import Raute8 from '$lib/components/Raute_8.svelte';
 
 	// Beschreibung der Patterns für die Sidebar, mit Verknüpfung zu euren Komponenten
 	let patterns = [
@@ -29,7 +30,7 @@
 			description: 'Anfangsmuster mit schwarz-weißen Rauten'
 		},
 		{
-			name: 'Farbpaletten ',
+			name: 'Farbpaletten',
 			component: Raute1,
 			description: 'Erste Variation mit Farbpaletten'
 		},
@@ -44,20 +45,26 @@
 			description: 'Verzerrung der Rauten'
 		},
 		{
-			name: '(kommt später weg)',
-			component: Raute4,
-			description: 'Full control variant (controls in left sidebar)'
+			name: 'Variation Dreiecke',
+			component: Raute7,
+			description: 'Variation mit unterschiedlichen Dreiecksfarben'
 		},
+		// {
+		// 	name: '(kommt später weg)',
+		// 	component: Raute4,
+		// 	description: 'Full control variant (controls in left sidebar)'
+		// },
 
 		{
 			name: 'Farbmuster Variation',
 			component: Raute6,
 			description: 'Variation mit vordefinierten Mustern'
-		},
+		}
+		,
 		{
-			name: 'Raute 7',
-			component: Raute7,
-			description: 'Raute 7 Ansicht'
+			name: 'Volle Kontrolle',
+			component: Raute8,
+			description: 'Volle Kontrolle mit allen Parametern'
 		}
 	];
 

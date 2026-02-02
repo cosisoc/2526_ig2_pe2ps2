@@ -436,7 +436,7 @@ $: backgroundColor = computeBackgroundFromColors(colors, displayColors);
 	</div>
 
 	<div class="sidebar-right">
-		<Slider min={0} max={100} bind:value={triangleOpacity} label="Deckkraft 2. Dreieck" />
+<Slider min={0} max={100} bind:value={triangleOpacity} label="Deckkraft" />
 		
 		<Slider min={0.06} max={5} step={0.01} bind:value={starSpacing} label="Abstand Sterne" />
 		
